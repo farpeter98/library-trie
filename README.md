@@ -1,2 +1,2 @@
 # library-trie
-c++ trie data stracture implementation
+c++ [trie](https://en.wikipedia.org/wiki/Trie) data stracture implementation
