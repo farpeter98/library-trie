@@ -23,5 +23,8 @@
     <ClInclude Include="src\trie.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\node.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
