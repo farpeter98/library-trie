@@ -1,12 +1,14 @@
 #pragma once
 
-#ifndef LIB_TRIE_TRIE
-#define LIB_TRIE_TRIE
+#ifndef LTR_TRIE
+#define LTR_TRIE
 
 #include <utility>
 #include <string>
 #include <type_traits>
 #include "node.hpp"
+
+namespace ltr {
 
 template<typename K,
 		 typename V,
@@ -55,4 +57,6 @@ private:
 	node_type* _root;
 };
 
-#endif // LIB_TRIE_TRIE
+}	// namespace ltr
+
+#endif // LTR_TRIE

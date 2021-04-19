@@ -1,9 +1,11 @@
 #pragma once
 
-#ifndef LIB_TRIE_NODE
-#define LIB_TRIE_NODE
+#ifndef LTR_NODE
+#define LTR_NODE
 
 #include <utility>
+
+namespace ltr {
 
 template<typename K,
 		 typename V>
@@ -88,4 +90,7 @@ struct _Node {
 	}
 };
 
-#endif // LIB_TRIE_NODE
+}	// namespace ltr
+
+
+#endif // LTR_NODE

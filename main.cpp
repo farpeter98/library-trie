@@ -30,6 +30,7 @@ in the key.
 // Extra challenge: implement your own optional!
 template <typename T>
 using optional = std::optional<T>;
+using namespace ltr;
 
 int stupid() {
   // Conventional trie: map strings to some T.
