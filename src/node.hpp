@@ -77,6 +77,19 @@ struct _Node {
 		return p;
 	}
 
+
+	_Node& operator=(const _Node& other) {
+		return _Node(other);
+	}
+
+	constexpr _Node& operator=(_Node&& other) = default;
+
+	// new overload for convenient use
+	void* operator new (std::size_t size) {
+		void* p = allocator_traits::allocate(node_allocator, 1);
+		return p;
+	}
+
 	// delete overload for convenient use
 	void operator delete (void * p) {
 		allocator_traits::deallocate(node_allocator, static_cast<_Node*>(p), 1);
