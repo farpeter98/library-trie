@@ -6,41 +6,38 @@
 #include <utility>
 
 template<typename K,
-		 typename V,
-		 typename Key_alloc>
+		 typename V>
 struct _Node {
-	static Key_alloc alloc;
 	_Node* parent;
-	K* key;
+	K key;
 	std::optional<V> value;
+	_Node* prev;
 	_Node* next;
 	_Node* child;
 
-	constexpr _Node() noexcept : parent(nullptr), next(nullptr), child(nullptr), key(nullptr) {}
+	//root node's gonna have a key, which will have to be accounted for
+	constexpr _Node() noexcept : parent(nullptr), prev(nullptr), next(nullptr), child(nullptr), key() {}
+
+	constexpr _Node(_Node&& other) = default;
 
 	// recursively create a deep copy of the node's subtree
-	_Node(const _Node& other) : value(other.value) {
-		key = alloc.allocate(1);
-		*key = other->key;
+	_Node(const _Node& other) : key(other.key), value(other.value) {
 		if (other.child) {
 			_Node* prev_child = new _Node(*(other.child));
-			insert_child(*prev_child);
+			set_child(prev_child);
 
-			while (_Node* n = other.child->next) {
+			_Node* n = other.child->next;
+			while (n != nullptr) {
 				_Node* copy = new _Node(*n);
-				prev_child->insert_next_sibling(*copy);
+				prev_child->set_next(copy);
 				prev_child = copy;
 				n = n->next;
 			}
 		}
 	}
 
-	constexpr _Node(_Node&& other) = default;
-
-	_Node(const K& key, const V& value) : _Node(), value(value) {
-		this->key = alloc.allocate(1);
-		*(this->key) = key;
-	}
+	_Node(const K& key, const V& value) : key(key), value(std::in_place, value), parent(nullptr),
+										  prev(nullptr), next(nullptr), child(nullptr) {}
 
 	_Node& operator=(const _Node& other) {
 		return _Node(other);
@@ -48,12 +45,14 @@ struct _Node {
 
 	constexpr _Node& operator=(_Node&& other) = default;
 
-	//constexpr _Node(K&& key, V&& value): _Node(), key(Key_alloc(key)), value(std::in_place, std::move(value)) {}
+	constexpr _Node(K&& key, V&& value): key(std::exchange(key, 0)), value(std::in_place, std::move(value)), parent(nullptr),
+										 prev(nullptr), next(nullptr), child(nullptr) {
+	}
 
 	// recursively destroy this node and its subtree
 	~_Node() {
-		while (_Node* n = child) {
-			alloc.deallocate(key, 1);
+		_Node* n = child;
+		while (n != nullptr) {
 			_Node* tmp = n->next;
 			delete n;
 			n = tmp;
@@ -61,36 +60,32 @@ struct _Node {
 	}
 
 	// should only be used if no children are present
-	void insert_child(_Node& other) {
-		static_assert(child);
-		other.parent = this;
-		child = &other;
+	void set_child (_Node* other) {
+		assert(!child);
+		other->parent = this;
+		child = other;
 	}
 
-	void insert_next_sibling(_Node& other) {
+	void set_next (_Node* other) {
 		if (next) {
-			other.next = this->next;
+			other->next = this->next;
+			this->next->prev = other;
 		}
 		other.parent = parent;
-		next = &other;
+		next = other;
 	}
 
 	// doesn't check if has element, returns this node if key not found
-	_Node& find_child(const K& key) {
-		if (child) {
-			while (_Node* n = child) {
-				if (*(n->key) == key)
-					return *n;
+	_Node& find_child (const K& key) {
+		if (_Node* n = child) {
+			while (n != nullptr) {
+				if (n->key == key)
+					return n;
 				n = n->next;
 			}
 		}
 		return *this;
 	}
 };
-
-template<typename K,
-		 typename V,
-		 typename Key_alloc>
-Key_alloc _Node<K, V, Key_alloc>::alloc = Key_alloc();
 
 #endif // LIB_TRIE_NODE

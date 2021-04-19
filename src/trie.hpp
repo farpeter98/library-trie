@@ -22,7 +22,7 @@ public:
 	using key_compare = typename Comp<K>;
 	using allocator_type = typename Alloc<value_type>;
 	using key_concat = typename Concat_expr_t;
-	using node_type = typename _Node<K, V, typename key_type::allocator_type>;
+	using node_type = typename _Node<K, V>;
 
 	trie() = delete;
 
@@ -30,16 +30,29 @@ public:
 
 	constexpr trie(trie&& other) = default;
 
-	trie(const key_concat& concat_expr) : _concat_expr(concat_expr) {}
+	trie(const key_concat& concat_expr) : _concat_expr(concat_expr), _root(new node_type()) {}
+
+	~trie() {
+		delete _root;
+	}
 
 	trie& operator=(const trie& other) = default;
 
 	trie& operator=(trie&& other) = default;
 
-
 private:
+	const key_type& _Get_key(node_type* node) const {
+		node_type* current = node;
+		key_type key;
+		while (current != _root) {
+			key = _concat_expr(key, current->key);
+			current = current->parent;
+		}
+		return key;
+	}
+
 	key_concat _concat_expr;
-	node_type _root;
+	node_type* _root;
 };
 
 #endif // LIB_TRIE_TRIE
