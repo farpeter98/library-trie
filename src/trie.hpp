@@ -5,7 +5,6 @@
 
 #include <utility>
 #include <string>
-#include <memory>
 #include <type_traits>
 #include "node.hpp"
 
@@ -23,8 +22,9 @@ public:
 	using key_type = typename Seq<K, Traits<K>, Alloc<K>>;
 	using value_type = typename std::pair<const key_type, V>;
 	using key_compare = typename Comp<K>;
+	using allocator_type = typename Alloc<value_type>;
 	using key_concat = typename Concat_expr_t;
-	using node_type = typename _Node<K, V, Alloc>;
+	using node_type = typename _Node<K, V>;
 
 	trie() = delete;
 
@@ -53,11 +53,10 @@ private:
 		return key;
 	}
 
-
 	key_concat _concat_expr;
 	node_type* _root;
 };
 
-} // namespace ltr
+}	// namespace ltr
 
 #endif // LTR_TRIE
