@@ -17,12 +17,9 @@ struct _Node {
 	static Alloc<_Node> node_allocator;
 
 
-	_Node* parent;
+	_Node* parent, * child, * prev, * next;
 	K key;
 	std::optional<V> value;
-	_Node* prev;
-	_Node* next;
-	_Node* child;
 
 
 	//root node's gonna have a key, which will have to be accounted for
@@ -120,6 +117,5 @@ template<typename K,
 Alloc<typename _Node<K, V, Alloc>> _Node<K, V, Alloc>::node_allocator;
 
 } // namespace ltr
-
 
 #endif // LTR_NODE

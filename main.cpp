@@ -256,7 +256,9 @@ int generic() {
                                std::allocator>;
   static_assert(std::is_same_v<default_template_parameters, fully_specified>);
 
-  
+  std::cout << std::is_object<fully_specified::iterator>::value << std::endl;
+  std::cout << std::is_swappable<fully_specified::iterator>::value << std::endl;
+  std::cout << std::is_default_constructible<fully_specified::iterator>::value << std::endl;
   // The internal representation of the nodes should be something like this:
   /*
 

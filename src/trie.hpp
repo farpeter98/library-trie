@@ -8,6 +8,7 @@
 #include <memory>
 #include <type_traits>
 #include "node.hpp"
+#include "iterators.hpp"
 
 namespace ltr {
 
@@ -20,11 +21,13 @@ template<typename K,
 		 template<typename T> typename Alloc = std::allocator>
 class trie {
 public:
-	using key_type = typename Seq<K, Traits<K>, Alloc<K>>;
-	using value_type = typename std::pair<const key_type, V>;
+	using key_type    = typename Seq<K, Traits<K>, Alloc<K>>;
+	using mapped_type = typename V;
+	using value_type  = typename std::pair<const key_type, mapped_type>;
 	using key_compare = typename Comp<K>;
-	using key_concat = typename Concat_expr_t;
-	using node_type = typename _Node<K, V, Alloc>;
+	using key_concat  = typename Concat_expr_t;
+	using node_type   = typename _Node<K, V, Alloc>;
+	using iterator    = typename _Tree_bidirectional_iterator<trie>;
 
 	trie() = delete;
 
@@ -51,6 +54,10 @@ private:
 			current = current->parent;
 		}
 		return key;
+	}
+
+	const node_type& _Find_node(const key_type& key) const {
+
 	}
 
 
