@@ -24,11 +24,11 @@ struct _Node {
 
 	//root node's gonna have a key, which will have to be accounted for
 	constexpr _Node() noexcept : parent(nullptr), prev(nullptr), next(nullptr), child(nullptr), key() {}
-
 	constexpr _Node(_Node&& other) = default;
 
 	// recursively create a deep copy of the node's subtree
-	_Node(const _Node& other) : key(other.key), value(other.value) {
+	_Node(const _Node& other) : key(other.key), value(other.value), parent(nullptr),
+		                        prev(nullptr), next(nullptr), child(nullptr) {
 		if (other.child) {
 			_Node* prev_child = new _Node(*(other.child));
 			set_child(prev_child);
@@ -43,8 +43,8 @@ struct _Node {
 		}
 	}
 
-	_Node(const K& key, const V& value) : key(key), value(std::in_place, value), parent(nullptr),
-										  prev(nullptr), next(nullptr), child(nullptr) {}
+	constexpr _Node(const K& key, const V& value) : key(key), value(std::in_place, value), parent(nullptr),
+										            prev(nullptr), next(nullptr), child(nullptr) {}
 
 	constexpr _Node(K&& key, V&& value): key(std::exchange(key, 0)), value(std::in_place, std::move(value)), parent(nullptr),
 										 prev(nullptr), next(nullptr), child(nullptr) {
@@ -92,7 +92,7 @@ struct _Node {
 			other->next = this->next;
 			this->next->prev = other;
 		}
-		other.parent = parent;
+		other->parent = parent;
 		next = other;
 	}
 

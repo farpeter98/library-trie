@@ -30,20 +30,19 @@ public:
 	using iterator    = typename _Tree_bidirectional_iterator<trie>;
 
 	trie() = delete;
-
-	constexpr trie(const trie& other) = default;
-
+	constexpr trie(const trie& other) : _concat_expr(other._concat_expr), _root(new node_type(*(other._root))) {}
 	constexpr trie(trie&& other) = default;
+	constexpr trie& operator=(trie && other) = default;
+
+	trie& operator=(const trie& other) {
+		return trie(other);
+	}
 
 	trie(const key_concat& concat_expr) : _concat_expr(concat_expr), _root(new node_type()) {}
 
 	~trie() {
 		delete _root;
 	}
-
-	trie& operator=(const trie& other) = default;
-
-	trie& operator=(trie&& other) = default;
 
 private:
 	const key_type& _Get_key(node_type* node) const {
