@@ -14,6 +14,7 @@ template<typename K,
 struct _Node {
 
 	using allocator_traits = typename std::allocator_traits<Alloc<_Node>>;
+	using key_type         = typename K;
 	static Alloc<_Node> node_allocator;
 
 
@@ -23,8 +24,8 @@ struct _Node {
 
 
 	//root node's gonna have a key, which will have to be accounted for
-	constexpr _Node() noexcept : parent(nullptr), prev(nullptr), next(nullptr), child(nullptr), key() {}
-	constexpr _Node(_Node&& other) = default;
+	constexpr _Node() noexcept(noexcept(K())) : parent(nullptr), prev(nullptr), next(nullptr), child(nullptr), key() {}
+	constexpr _Node(_Node&& other) noexcept = default;
 
 	// recursively create a deep copy of the node's subtree
 	_Node(const _Node& other) : key(other.key), value(other.value), parent(nullptr),
@@ -66,7 +67,7 @@ struct _Node {
 		return _Node(other);
 	}
 
-	constexpr _Node& operator=(_Node&& other) = default;
+	constexpr _Node& operator=(_Node&& other) noexcept = default;
 
 	// new overload for convenient use
 	void* operator new (std::size_t size) {

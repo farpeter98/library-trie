@@ -283,6 +283,11 @@ x
   // one's. It is only the representation that is different, emphasising cache
   // locality and smaller memory footprint.
   default_template_parameters GTI{CharToStringConcat};
+  default_template_parameters::iterator ite;
+  auto it = GTI.begin();
+  //auto& it2 = it;
+  ++it;
+  std::cout << (it == it) << " " << it->first << " " << it->second << std::endl;
   /*
   assert(GTI.empty() && GTI.size() == 0 && GTI.count("whispy") == 0);
   GTI.count(static_cast<void*>(0)); // !!! Should not compile.
