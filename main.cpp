@@ -255,10 +255,6 @@ int generic() {
                                std::char_traits,
                                std::allocator>;
   static_assert(std::is_same_v<default_template_parameters, fully_specified>);
-
-  std::cout << std::is_object<fully_specified::iterator>::value << std::endl;
-  std::cout << std::is_swappable<fully_specified::iterator>::value << std::endl;
-  std::cout << std::is_default_constructible<fully_specified::iterator>::value << std::endl;
   // The internal representation of the nodes should be something like this:
   /*
 
@@ -283,11 +279,20 @@ x
   // one's. It is only the representation that is different, emphasising cache
   // locality and smaller memory footprint.
   default_template_parameters GTI{CharToStringConcat};
-  default_template_parameters::iterator ite;
-  auto it = GTI.begin();
-  //auto& it2 = it;
-  ++it;
-  std::cout << (it == it) << " " << it->first << " " << it->second << std::endl;
+  using it = typename default_template_parameters::iterator;
+  std::cout << "iterator:" << std::endl;
+  std::cout << "copy_ctor:" << std::is_copy_constructible<it>::value << std::endl;
+  std::cout << "copy_assign:" << std::is_copy_assignable<it>::value << std::endl;
+  std::cout << "destructible:" << std::is_destructible<it>::value << std::endl;
+  std::cout << "swappable:" << std::is_swappable<it>::value << std::endl;
+
+  std::cout << "forward_iterator:" << std::endl;
+  std::cout << "def_ctor:" << std::is_default_constructible<it>::value << std::endl;
+  static_assert(std::is_same_v<std::iterator_traits<it>::reference,const std::iterator_traits<it>::value_type&>);
+  
+  auto iter = GTI.begin();
+  auto& var = *iter;
+  auto& sajt = iter->first;
   /*
   assert(GTI.empty() && GTI.size() == 0 && GTI.count("whispy") == 0);
   GTI.count(static_cast<void*>(0)); // !!! Should not compile.

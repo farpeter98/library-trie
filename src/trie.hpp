@@ -3,6 +3,10 @@
 #ifndef LTR_TRIE
 #define LTR_TRIE
 
+// from c++20 captureless lambdas are default constructible
+// but std::is_default_constructible still evaluated to false
+// hence the macro workaround
+// also visual studio 
 #if __cplusplus > 201703L 
 #define ISCPP20 true
 #else

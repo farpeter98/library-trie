@@ -18,19 +18,21 @@ protected:
 	using trie_type   = typename T;
 	using node_type   = typename trie_type::node_type;
 	using key_type    = typename trie_type::key_type;
-	using value_type  = typename trie_type::value_type;
 	using concat_type = typename trie_type::concat_type;
+	using value_type  = typename trie_type::value_type;
+	using pointer     = typename value_type*;
+	using reference   = typename const value_type&;
 
 public:
 
 	_Iterator_base() noexcept : node(nullptr), prev_visited(nullptr) {}
 
-	value_type& operator*() {
+	reference operator*() {
 		set_value();
 		return *(this->value_ptr);
 	}
 
-	value_type* operator->() {
+	pointer operator->() {
 		set_value();
 		return (this->value_ptr).get();
 	}
@@ -131,8 +133,8 @@ public:
 	// iterator traits definitions
 	using difference_type   = typename std::ptrdiff_t;
 	using value_type        = typename base_type::value_type;
-	using pointer           = typename value_type*;
-	using reference         = typename value_type&;
+	using pointer           = typename base_type::pointer;
+	using reference         = typename base_type::reference;
 	using iterator_category = typename std::bidirectional_iterator_tag;
 
 	_Tree_bidirectional_iterator() noexcept : base_type() {}
