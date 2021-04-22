@@ -6,7 +6,6 @@
 #include <utility>
 #include <iterator>
 #include <memory>
-#include <functional>
 
 #include "node.hpp"
 
@@ -109,7 +108,7 @@ protected:
 
 	void set_value() {
 		assert(node->value.has_value());
-		value_type val = value_type(get_key(), node->value.value());
+		value_type val = value_type(concat.get_key(node), node->value.value());
 		value_ptr = std::make_shared<value_type>(std::move(val));
 	}
 
@@ -118,17 +117,6 @@ protected:
 
 private:
 	node_type* prev_visited;
-
-	key_type get_key() const {
-		node_type* current = node;
-		key_type key;
-		while ((current->parent) != nullptr) {
-			key = concat(key, current->key);
-			current = current->parent;
-		}
-		return key;
-	}
-
 	concat_type concat;
 };
 
