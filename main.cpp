@@ -280,19 +280,21 @@ x
   // locality and smaller memory footprint.
   default_template_parameters GTI{CharToStringConcat};
   using it = typename default_template_parameters::iterator;
-  std::cout << "iterator:" << std::endl;
+  std::cout << "___iterator___" << std::endl;
   std::cout << "copy_ctor:" << std::is_copy_constructible<it>::value << std::endl;
   std::cout << "copy_assign:" << std::is_copy_assignable<it>::value << std::endl;
   std::cout << "destructible:" << std::is_destructible<it>::value << std::endl;
-  std::cout << "swappable:" << std::is_swappable<it>::value << std::endl;
+  std::cout << "swappable" << std::is_swappable<it>::value << std::endl;
 
-  std::cout << "forward_iterator:" << std::endl;
+  std::cout << "___forward_iterator___" << std::endl;
   std::cout << "def_ctor:" << std::is_default_constructible<it>::value << std::endl;
   static_assert(std::is_same_v<std::iterator_traits<it>::reference,const std::iterator_traits<it>::value_type&>);
   
   auto iter = GTI.begin();
   auto& var = *iter;
   auto& sajt = iter->first;
+  ++iter;
+  --iter;
   /*
   assert(GTI.empty() && GTI.size() == 0 && GTI.count("whispy") == 0);
   GTI.count(static_cast<void*>(0)); // !!! Should not compile.

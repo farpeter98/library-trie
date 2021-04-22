@@ -65,7 +65,7 @@ public:
 	}
 
 	iterator begin() {
-		iterator it = end();
+		iterator it(_root, _concat);
 		++it;
 		return it;
 	}
@@ -74,6 +74,15 @@ public:
 		return iterator(_root, _concat);
 	}
 
+	iterator rbegin() {
+		iterator it(_root, _concat);
+		--it;
+		return it;
+	}
+
+	iterator rend() {
+		return iterator(_root, _concat);
+	}
 
 private:
 	// template struct with a condition based on whether the lambda is default constructible

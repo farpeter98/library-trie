@@ -25,7 +25,7 @@ protected:
 
 public:
 
-	_Iterator_base() noexcept : node(nullptr), prev_visited(nullptr) {}
+	_Iterator_base() noexcept : node(nullptr) {}
 
 	reference operator*() {
 		set_value();
@@ -45,54 +45,42 @@ public:
 		return !(*this == rhs);
 	}
 
-	// depth-first tree traversal for first element with value
-	// some invariants: - iterator is always on either on a node with value, or the root node, in which case parent is nullptr
-	//                  - all leaf nodes (meaning child is nullptr) have a value
-	// also need to keep track of the previously visited node, to make it possible to go towards the root
+	// preorder-like tree traversal for next element containing a value
+	// from begin to end returns a lexicographically ordered sequence of keys
+	// some invariants: -node always either has value, or is the root
+	//                  -leaf nodes always have value, hence no check when descending to a leaf
 	_Iterator_base& operator++() {
-		// if not on a leaf node, and wasn't coming from towards the child, go to the leftmost leaf
-		if (node->child != nullptr && node->child != prev_visited) {
-			while (node->child != nullptr)
+		// case 1: current node is not a leaf
+		if (node->child) {
+			node = node->child;
+			// traverse along left children until found a node with a value
+			// although not explicitly checked, if a node has no value
+			// it can't be a leaf, thus it always has a child
+			while (!(node->value.has_value()))
 				node = node->child;
-			prev_visited = node->parent;
 			return *this;
 		}
 
-		// if on a leaf node, and there's a right-side sibling go to the sibling's leftmost leaf
-		if (node->next != nullptr) {
-			prev_visited = node;
+		// case 2: current node has a right-side sibling
+		if (node->next) {
 			node = node->next;
-			while (node->child != nullptr)
+			// traverse along left children until found a node with a value
+			while (!(node->value.has_value()))
 				node = node->child;
-			// check if there was any depth traversal
-			if (prev_visited != node->prev)
-				prev_visited = node->parent;
 			return *this;
 		}
 
-		// else go one level towards the root - need to check if parent is not nullptr, due to trees consisting only of the root
-		while (node->parent != nullptr) {
+		// case 3: current node has no children or right-side sibling
+		// need to ascend until there's a right-side sibling, or we're at the root
+		while (node->next == nullptr && node->parent)
 			node = node->parent;
-			// if the node has a value, it's a valid stop
-			if (node->value.has_value()) {
-				prev_visited = node->child;
-				return *this;
-			}
-
-			// if the node has a right-side sibling, go to sibling's leftmost leaf
-			if (node->next != nullptr) {
-				prev_visited = node;
+		// same as case 2
+		if (node->next) {
+			node = node->next;
+			while (!(node->value.has_value()))
 				node = node->child;
-				while (node->child != nullptr)
-					node = node->child;
-				if (prev_visited != node->prev)
-					prev_visited = node->parent;
-				return *this;
-			}
-
 		}
-		// at this point we're always at the root
-		prev_visited = node;
+		// node is either root or a node in a rightside subtree
 		return *this;
 	}
 
@@ -102,10 +90,64 @@ public:
 		return old;
 	}
 
+	_Iterator_base& operator--() {
+		// case 1: node has a left-side sibling - either leaf or intermediate node
+		if (node->prev) {
+			node = node->prev;
+			// go to its rightmost child until on a leaf
+			while (node->child) {
+				node = node->child;
+				while (node->next)
+					node = node->next;
+			}
+			return *this;
+		}
+
+		// case 2: no left-side sibling
+		// ascend until found a node with a value, or a left-side sibling
+		if (node->parent) {
+			node = node->parent;
+			while (!(node->value.has_value()) && node->prev == nullptr && node->parent)
+				node = node->parent;
+
+			// if found a value, return
+			if (node->value.has_value())
+				return *this;
+
+			// if there's a left-side sibling, repeat case 1
+			if (node->prev) {
+				node = node->prev;
+				while (node->child) {
+					node = node->child;
+					while (node->next)
+						node = node->next;
+				}
+			}
+
+			// reached left-subtree target node or the root
+			return *this;
+		}
+		
+		// case 3: started at the root
+		// descend to the rightmost child
+		while (node->child) {
+			node = node->child;
+			while (node->next)
+				node = node->next;
+		}
+		return *this;
+	}
+
+	_Iterator_base operator--(int) {
+		_Iterator_base old = *this;
+		operator--();
+		return old;
+	}
+
 protected:
 
 	_Iterator_base(const _Iterator_base& other) = default;
-	_Iterator_base(node_type* node, concat_type concat) : node(node), concat(concat), prev_visited(nullptr) {}
+	_Iterator_base(node_type* node, concat_type concat) : node(node), concat(concat) {}
 	_Iterator_base& operator=(const _Iterator_base& other) = default;
 
 	void set_value() {
@@ -118,7 +160,6 @@ protected:
 	std::shared_ptr<value_type> value_ptr;
 
 private:
-	node_type* prev_visited;
 	concat_type concat;
 };
 
