@@ -91,7 +91,8 @@ private:
 		// if default constructible, no need to store as member
 		constexpr key_concater() noexcept = default;
 		constexpr key_concater(const key_concat&) noexcept {}
-		key_type get_key(node_type* node) const {
+
+		key_type operator()(node_type* node) const {
 			node_type* current = node;
 			key_type key;
 			while ((current->parent) != nullptr) {
@@ -107,7 +108,8 @@ private:
 		// if default constructible, no need to store as member
 		key_concater() noexcept = default;
 		key_concater(const key_concat& concat) : concat(concat) {}
-		key_type get_key(node_type* node) const {
+
+		key_type operator()(node_type* node) const {
 			node_type* current = node;
 			key_type key;
 			while ((current->parent) != nullptr) {

@@ -152,7 +152,7 @@ protected:
 
 	void set_value() {
 		assert(node->value.has_value());
-		value_type val = value_type(concat.get_key(node), node->value.value());
+		value_type val = value_type(concat(node), node->value.value());
 		value_ptr = std::make_shared<value_type>(std::move(val));
 	}
 
