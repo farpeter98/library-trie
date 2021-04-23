@@ -6,7 +6,8 @@
 // from c++20 captureless lambdas are default constructible
 // but std::is_default_constructible still evaluated to false
 // hence the macro workaround
-// also visual studio 
+// also msvc only partially supports c++20 as of the time of creation
+// hence __cplusplus is not raised to 202002L, so we check for greater than c++17
 #if __cplusplus > 201703L 
 #define ISCPP20 true
 #else

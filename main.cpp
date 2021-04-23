@@ -293,6 +293,7 @@ x
   auto iter = GTI.end();
   auto& var = *iter;
   var.second = 12;
+  iter->second = 37;
   auto& sajt = iter->first;
   ++iter;
   --iter;
