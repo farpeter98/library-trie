@@ -28,25 +28,26 @@ namespace ltr {
 template<typename K,
 		 typename V,
 		 typename Concat_expr_t,
-		 template<typename T> typename Comp = std::less,
+		 template<typename T>    typename Comp   = std::less,
 		 template<typename SeqT, typename SeqTraits, typename SeqAlloc> typename Seq = std::basic_string,
-		 template<typename T> typename Traits = std::char_traits,
-		 template<typename T> typename Alloc = std::allocator>
+		 template<typename T>    typename Traits = std::char_traits,
+		 template<typename T>    typename Alloc  = std::allocator>
 class trie {
 private:
 	// forward declare concater struct
 	template<bool>
 	struct key_concater;
 public:
-	using key_type       = typename Seq<K, Traits<K>, Alloc<K>>;
-	using mapped_type    = typename V;
-	using value_type     = typename std::pair<const key_type, mapped_type>;
-	using key_compare    = typename Comp<K>;
-	using key_concat     = typename Concat_expr_t;
-	using concat_type    = typename key_concater<ISCPP20>;
-	using node_type      = typename _Node<K, V, Alloc>;
-	using iterator       = typename _Iterator_base<trie, false>;
-	using const_iterator = typename _Iterator_base<trie, true>;
+	using key_type               = typename Seq<K, Traits<K>, Alloc<K>>;
+	using value_type             = typename std::pair<const key_type, V>;
+	using key_compare            = typename Comp<K>;
+	using key_concat             = typename Concat_expr_t;
+	using concat_type            = typename key_concater<ISCPP20>;
+	using node_type              = typename _Node<K, value_type, Alloc>;
+	using iterator               = typename _Iterator_base<trie, false, false>;
+	using const_iterator         = typename _Iterator_base<trie, true, false>;
+	using reverse_iterator       = typename _Iterator_base<trie, false, true>;
+	using const_reverse_iterator = typename _Iterator_base<trie, true, true>;
 
 	constexpr trie() noexcept = delete;
 	trie(const trie& other) : _concat(other._concat), _root(new node_type(*(other._root))) {}
@@ -58,7 +59,7 @@ public:
 	}
 
 	trie(const key_concat& concat) : _concat(concat), _root(new node_type()) {
-		_root->value.emplace(42);
+		_root->value.emplace(std::make_pair("sajt", 42));
 	}
 
 	~trie() {
@@ -66,63 +67,63 @@ public:
 	}
 
 	iterator begin() {
-		iterator it(_root, _concat);
+		iterator it(_root);
 		++it;
 		return it;
 	}
 	
 	const_iterator begin() const {
-		const_iterator it(_root, _concat);
+		const_iterator it(_root);
 		++it;
 		return it;
 	}
 
 	const_iterator cbegin() const {
-		const_iterator it(_root, _concat);
+		const_iterator it(_root);
 		++it;
 		return it;
 	}
 
-	iterator rbegin() {
-		iterator it(_root, _concat);
+	reverse_iterator rbegin() {
+		reverse_iterator it(_root);
 		--it;
 		return it;
 	}
 
-	const_iterator rbegin() const {
-		const_iterator it(_root, _concat);
+	const_reverse_iterator rbegin() const {
+		const_reverse_iterator it(_root);
 		--it;
 		return it;
 	}
 
-	const_iterator crbegin() const {
-		const_iterator it(_root, _concat);
+	const_reverse_iterator crbegin() const {
+		const_reverse_iterator it(_root);
 		--it;
 		return it;
 	}
 
 	iterator end() {
-		return iterator(_root, _concat);
+		return iterator(_root);
 	}
 
 	const_iterator end() const {
-		return iterator(_root, _concat);
+		return const_iterator(_root);
 	}
 
 	const_iterator cend() const {
-		return const_iterator(_root, _concat);
+		return const_iterator(_root);
 	}
 
-	iterator rend() {
-		return iterator(_root, _concat);
+	reverse_iterator rend() {
+		return reverse_iterator(_root);
 	}
 
-	const_iterator rend() const {
-		return iterator(_root, _concat);
+	const_reverse_iterator rend() const {
+		return const_reverse_iterator(_root);
 	}
 
-	const_iterator crend() const {
-		return const_iterator(_root, _concat);
+	const_reverse_iterator crend() const {
+		return const_reverse_iterator(_root);
 	}
 
 private:
@@ -164,7 +165,7 @@ private:
 
 	concat_type _concat;
 	node_type* _root;
-};
+}; // class trie
 
 } // namespace ltr
 

@@ -9,7 +9,7 @@
 namespace ltr {
 
 template<typename K,
-		 typename V,
+		 typename value_type,
 		 template <typename T> typename Alloc>
 struct _Node {
 
@@ -20,7 +20,7 @@ struct _Node {
 
 	_Node* parent, * child, * prev, * next;
 	K key;
-	std::optional<V> value;
+	std::optional<value_type> value;
 
 
 	//root node's gonna have a key, which will have to be accounted for
@@ -44,11 +44,11 @@ struct _Node {
 		}
 	}
 
-	constexpr _Node(const K& key, const V& value) : key(key), value(std::in_place, value), parent(nullptr),
-										            prev(nullptr), next(nullptr), child(nullptr) {}
+	constexpr _Node(const K& key, const value_type& value) : key(key), value(std::in_place, value), parent(nullptr),
+										                     prev(nullptr), next(nullptr), child(nullptr) {}
 
-	constexpr _Node(K&& key, V&& value): key(std::exchange(key, 0)), value(std::in_place, std::move(value)), parent(nullptr),
-										 prev(nullptr), next(nullptr), child(nullptr) {
+	constexpr _Node(K&& key, value_type&& value): key(std::exchange(key, 0)), value(std::in_place, std::move(value)), parent(nullptr),
+										          prev(nullptr), next(nullptr), child(nullptr) {
 	}
 
 
@@ -109,13 +109,13 @@ struct _Node {
 		return *this;
 	}
 
-};
+}; // struct _Node
 
 // instantiate static allocator
 template<typename K,
-		 typename V,
+		 typename value_type,
 		 template<typename T> typename Alloc>
-Alloc<typename _Node<K, V, Alloc>> _Node<K, V, Alloc>::node_allocator;
+Alloc<typename _Node<K, value_type, Alloc>> _Node<K, value_type, Alloc>::node_allocator;
 
 } // namespace ltr
 

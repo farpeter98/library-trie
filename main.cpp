@@ -288,14 +288,18 @@ x
 
   std::cout << "___forward_iterator___" << std::endl;
   std::cout << "def_ctor:" << std::is_default_constructible<it>::value << std::endl;
- // static_assert(std::is_same_v<std::iterator_traits<it>::reference,const std::iterator_traits<it>::value_type&>);
+  static_assert(std::is_same_v<std::iterator_traits<it>::reference, std::iterator_traits<it>::value_type&>);
   
-  auto iter = GTI.begin();
+  auto iter = GTI.end();
   auto& var = *iter;
   var.second = 12;
   auto& sajt = iter->first;
   ++iter;
   --iter;
+
+  auto riter = GTI.rend();
+  ++riter;
+  --riter;
 
   std::map<std::string, int> map{ {"key1", 12},
                                   {"key2", 24},
