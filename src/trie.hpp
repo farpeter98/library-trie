@@ -45,7 +45,8 @@ public:
 	using key_concat     = typename Concat_expr_t;
 	using concat_type    = typename key_concater<ISCPP20>;
 	using node_type      = typename _Node<K, V, Alloc>;
-	using iterator       = typename _Tree_bidirectional_iterator<trie>;
+	using iterator       = typename _Iterator_base<trie, false>;
+	using const_iterator = typename _Iterator_base<trie, true>;
 
 	constexpr trie() noexcept = delete;
 	trie(const trie& other) : _concat(other._concat), _root(new node_type(*(other._root))) {}
@@ -69,9 +70,17 @@ public:
 		++it;
 		return it;
 	}
+	
+	const_iterator begin() const {
+		const_iterator it(_root, _concat);
+		++it;
+		return it;
+	}
 
-	iterator end() {
-		return iterator(_root, _concat);
+	const_iterator cbegin() const {
+		const_iterator it(_root, _concat);
+		++it;
+		return it;
 	}
 
 	iterator rbegin() {
@@ -80,8 +89,40 @@ public:
 		return it;
 	}
 
+	const_iterator rbegin() const {
+		const_iterator it(_root, _concat);
+		--it;
+		return it;
+	}
+
+	const_iterator crbegin() const {
+		const_iterator it(_root, _concat);
+		--it;
+		return it;
+	}
+
+	iterator end() {
+		return iterator(_root, _concat);
+	}
+
+	const_iterator end() const {
+		return iterator(_root, _concat);
+	}
+
+	const_iterator cend() const {
+		return const_iterator(_root, _concat);
+	}
+
 	iterator rend() {
 		return iterator(_root, _concat);
+	}
+
+	const_iterator rend() const {
+		return iterator(_root, _concat);
+	}
+
+	const_iterator crend() const {
+		return const_iterator(_root, _concat);
 	}
 
 private:

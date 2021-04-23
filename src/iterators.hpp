@@ -11,21 +11,41 @@
 
 namespace ltr {
 
-// base class for iterators mainly responsible for creating the pair values
-template<typename T> // associated trie type
+// Bidirectional iterator class
+template<typename T,	// associated trie type
+		 bool is_const>
 class _Iterator_base {
-protected:
+private:
+	template<bool is_const>
+	struct value_type_struct;
+
+	template<>
+	struct value_type_struct<true> {
+		using get = typename const T::value_type;
+	};
+
+	template<>
+	struct value_type_struct<false> {
+		using get = typename T::value_type;
+	};
+
 	using trie_type   = typename T;
 	using node_type   = typename trie_type::node_type;
 	using key_type    = typename trie_type::key_type;
 	using concat_type = typename trie_type::concat_type;
-	using value_type  = typename trie_type::value_type;
-	using pointer     = typename value_type*;
-	using reference   = typename const value_type&;
+	using mapped_type = typename trie_type::mapped_type;
 
 public:
+	using difference_type   = typename std::ptrdiff_t;
+	using value_type        = typename value_type_struct<is_const>::get;
+	using pointer           = typename value_type*;
+	using reference         = typename value_type&;
+	using iterator_category = typename std::bidirectional_iterator_tag;
 
 	_Iterator_base() noexcept : node(nullptr) {}
+	_Iterator_base(const _Iterator_base& other) = default;
+	_Iterator_base(node_type * node, concat_type concat) : node(node), concat(concat) {}
+	_Iterator_base& operator=(const _Iterator_base & other) = default;
 
 	reference operator*() {
 		set_value();
@@ -56,7 +76,7 @@ public:
 			// traverse along left children until found a node with a value
 			// although not explicitly checked, if a node has no value
 			// it can't be a leaf, thus it always has a child
-			while (!(node->value.has_value()))
+			while (!(node->value.has_value()) && node->child)
 				node = node->child;
 			return *this;
 		}
@@ -65,7 +85,7 @@ public:
 		if (node->next) {
 			node = node->next;
 			// traverse along left children until found a node with a value
-			while (!(node->value.has_value()))
+			while (!(node->value.has_value()) && node->child)
 				node = node->child;
 			return *this;
 		}
@@ -144,48 +164,18 @@ public:
 		return old;
 	}
 
-protected:
-
-	_Iterator_base(const _Iterator_base& other) = default;
-	_Iterator_base(node_type* node, concat_type concat) : node(node), concat(concat) {}
-	_Iterator_base& operator=(const _Iterator_base& other) = default;
+private:
 
 	void set_value() {
 		assert(node->value.has_value());
-		value_type val = value_type(concat(node), node->value.value());
-		value_ptr = std::make_shared<value_type>(std::move(val));
+		mapped_type& v = *(node->value);
+		value_type val = value_type(concat(node), v);
+		value_ptr = std::make_shared<value_type>(val);
 	}
 
 	node_type* node;
 	std::shared_ptr<value_type> value_ptr;
-
-private:
 	concat_type concat;
-};
-
-template<typename T>
-class _Tree_bidirectional_iterator : public _Iterator_base<T> {
-private:
-	using base_type   = typename _Iterator_base<T>;
-	using node_type   = typename base_type::node_type;
-	using key_type    = typename base_type::key_type;
-	using concat_type = typename base_type::concat_type;
-public:
-	// iterator traits definitions
-	using difference_type   = typename std::ptrdiff_t;
-	using value_type        = typename base_type::value_type;
-	using pointer           = typename base_type::pointer;
-	using reference         = typename base_type::reference;
-	using iterator_category = typename std::bidirectional_iterator_tag;
-
-	_Tree_bidirectional_iterator() noexcept : base_type() {}
-	_Tree_bidirectional_iterator(const _Tree_bidirectional_iterator& other) : base_type(static_cast<const base_type&>(other)) {}
-	_Tree_bidirectional_iterator& operator=(const _Tree_bidirectional_iterator& other) {
-		return _Tree_bidirectional_iterator(other);
-	}
-
-	_Tree_bidirectional_iterator(node_type* node, concat_type concat) : base_type(node, concat) {}
-
 };
 
 } // namespace ltr

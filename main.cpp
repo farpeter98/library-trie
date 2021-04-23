@@ -288,13 +288,27 @@ x
 
   std::cout << "___forward_iterator___" << std::endl;
   std::cout << "def_ctor:" << std::is_default_constructible<it>::value << std::endl;
-  static_assert(std::is_same_v<std::iterator_traits<it>::reference,const std::iterator_traits<it>::value_type&>);
+ // static_assert(std::is_same_v<std::iterator_traits<it>::reference,const std::iterator_traits<it>::value_type&>);
   
   auto iter = GTI.begin();
   auto& var = *iter;
+  var.second = 12;
   auto& sajt = iter->first;
   ++iter;
   --iter;
+
+  std::map<std::string, int> map{ {"key1", 12},
+                                  {"key2", 24},
+                                  {"key3", 36} };
+  for (auto it = map.begin(); it != map.end(); ++it) {
+      auto& var = *it;
+      var.second = 999;
+      it->second = 1000;
+  }
+  for (auto it = map.cbegin(); it != map.cend(); ++it) {
+      std::cout << it->first << " " << it->second << std::endl;
+  }
+
   /*
   assert(GTI.empty() && GTI.size() == 0 && GTI.count("whispy") == 0);
   GTI.count(static_cast<void*>(0)); // !!! Should not compile.
