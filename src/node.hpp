@@ -45,6 +45,9 @@ struct _Node {
 		}
 	}
 
+	constexpr _Node(const K& key) : key(key), value(), parent(nullptr),
+		                            prev(nullptr), next(nullptr), child(nullptr) {}
+
 	constexpr _Node(const K& key, const value_type& value) : key(key), value(std::in_place, value), parent(nullptr),
 										                     prev(nullptr), next(nullptr), child(nullptr) {}
 
@@ -83,7 +86,7 @@ struct _Node {
 	void set_child (_Node* other) {
 		assert(!child);
 		other->parent = this;
-		child = other;
+		this->child = other;
 	}
 
 	void set_next (_Node* other) {
@@ -91,8 +94,8 @@ struct _Node {
 			other->next = this->next;
 			this->next->prev = other;
 		}
-		other->parent = parent;
-		next = other;
+		other->parent = this->parent;
+		this->next = other;
 	}
 
 }; // struct _Node
