@@ -106,7 +106,7 @@ private:
 				// traverse along left children until found a node with a value
 				// although not explicitly checked, if a node has no value
 				// it can't be a leaf, thus it always has a child
-				while (!(node->value.has_value()) && node->child)
+				while (!(node->value.has_value()))
 					node = node->child;
 				return node;
 			}
@@ -115,7 +115,7 @@ private:
 			if (node->next) {
 				node = node->next;
 				// traverse along left children until found a node with a value
-				while (!(node->value.has_value()) && node->child)
+				while (!(node->value.has_value()))
 					node = node->child;
 				return node;
 			}

@@ -91,11 +91,24 @@ struct _Node {
 
 	void set_next (_Node* other) {
 		if (next) {
-			other->next = this->next;
 			this->next->prev = other;
+			other->next = this->next;
 		}
-		other->parent = this->parent;
+		other->prev = this;
 		this->next = other;
+		other->parent = this->parent;
+	}
+
+	void set_prev(_Node* other) {
+		if (prev) {
+			this->prev->next = other;
+			other->prev = this->prev;
+		}
+		else if (parent)
+			this->parent->child = other;
+
+		other->next = this;
+		this->prev = other;
 	}
 
 }; // struct _Node

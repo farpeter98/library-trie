@@ -292,37 +292,19 @@ x
   std::cout << "def_ctor: " << std::is_default_constructible<it>::value << std::endl;
   static_assert(std::is_same_v<std::iterator_traits<it>::reference, std::iterator_traits<it>::value_type&>);
   
-  auto iter = GTI.end();
-  auto& var = *iter;
-  var.second = 12;
-  iter->second = 37;
-  auto& sajt = iter->first;
-  ++iter;
-  --iter;
 
-  auto riter = GTI.rend();
-  ++riter;
-  --riter;
+  default_template_parameters trie(CharToStringConcat);
 
-  default_template_parameters trie{{ {"key1", 12},
-                                  {"key2", 24},
-                                  {"key3", 36} }, CharToStringConcat };
-                                  
-  std::map<std::string, int> map{ {"key1", 12},
-                                  {"key2", 24},
-                                  {"key3", 36} };
-  for (auto it = map.begin(); it != map.end(); ++it) {
-      auto& var = *it;
-      var.second = 999;
-      it->second = 1000;
-  }
-  for (auto it = map.cbegin(); it != map.cend(); ++it) {
-      std::cout << it->first << " " << it->second << std::endl;
-  }
+  trie.insert({ "key1", 1452 });
+  trie.insert({ "key2", 12321 });
+  trie.insert({ "key3", 1216 });
+  trie.insert({ "agas", 131 });
+  trie.insert({ "key4", 122 });
+  trie.insert({ "key4", 125122 });
 
-  for (auto it = trie.begin(); it != trie.end(); ++it) {
-      std::cout << it->first << " " << it->second << std::endl;
-  }
+  trie.at("key1") = 79;
+  trie["key4"] = 69;
+  trie["key6"];
 
   for (auto& val : trie) {
       std::cout << val.first << " " << val.second << std::endl;
