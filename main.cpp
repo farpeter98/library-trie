@@ -278,16 +278,18 @@ x
   // The interface for the generic trie shall be roughly the same as the stupid
   // one's. It is only the representation that is different, emphasising cache
   // locality and smaller memory footprint.
-  default_template_parameters GTI{CharToStringConcat};
+  default_template_parameters GTI(CharToStringConcat, std::less<char>());
+
+  std::cout << "trie swappable: " << std::is_swappable<default_template_parameters>::value << std::endl;
   using it = typename default_template_parameters::iterator;
   std::cout << "___iterator___" << std::endl;
-  std::cout << "copy_ctor:" << std::is_copy_constructible<it>::value << std::endl;
-  std::cout << "copy_assign:" << std::is_copy_assignable<it>::value << std::endl;
-  std::cout << "destructible:" << std::is_destructible<it>::value << std::endl;
-  std::cout << "swappable" << std::is_swappable<it>::value << std::endl;
+  std::cout << "copy_ctor: " << std::is_copy_constructible<it>::value << std::endl;
+  std::cout << "copy_assign: " << std::is_copy_assignable<it>::value << std::endl;
+  std::cout << "destructible: " << std::is_destructible<it>::value << std::endl;
+  std::cout << "swappable: " << std::is_swappable<it>::value << std::endl;
 
   std::cout << "___forward_iterator___" << std::endl;
-  std::cout << "def_ctor:" << std::is_default_constructible<it>::value << std::endl;
+  std::cout << "def_ctor: " << std::is_default_constructible<it>::value << std::endl;
   static_assert(std::is_same_v<std::iterator_traits<it>::reference, std::iterator_traits<it>::value_type&>);
   
   auto iter = GTI.end();
@@ -302,6 +304,10 @@ x
   ++riter;
   --riter;
 
+  default_template_parameters trie{{ {"key1", 12},
+                                  {"key2", 24},
+                                  {"key3", 36} }, CharToStringConcat };
+                                  
   std::map<std::string, int> map{ {"key1", 12},
                                   {"key2", 24},
                                   {"key3", 36} };
@@ -313,6 +319,18 @@ x
   for (auto it = map.cbegin(); it != map.cend(); ++it) {
       std::cout << it->first << " " << it->second << std::endl;
   }
+
+  for (auto it = trie.begin(); it != trie.end(); ++it) {
+      std::cout << it->first << " " << it->second << std::endl;
+  }
+
+  for (auto& val : trie) {
+      std::cout << val.first << " " << val.second << std::endl;
+  }
+
+  std::cout << std::endl << std::endl << std::endl;
+
+  std::cout << "size: " << trie.size() << std::endl;
 
   /*
   assert(GTI.empty() && GTI.size() == 0 && GTI.count("whispy") == 0);

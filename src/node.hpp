@@ -9,27 +9,28 @@
 namespace ltr {
 
 template<typename K,
-		 typename value_type,
+		 typename V,
 		 template <typename T> typename Alloc>
 struct _Node {
 
-	using allocator_traits = typename std::allocator_traits<Alloc<_Node>>;
+	using allocator_type   = typename Alloc<_Node>;
+	using allocator_traits = typename std::allocator_traits<allocator_type>;
 	using key_type         = typename K;
-	static Alloc<_Node> node_allocator;
+	using value_type       = typename V;
 
+	static allocator_type node_allocator;
 
 	_Node* parent, * child, * prev, * next;
 	K key;
 	std::optional<value_type> value;
 
-
-	//root node's gonna have a key, which will have to be accounted for
 	constexpr _Node() noexcept(noexcept(K())) : parent(nullptr), prev(nullptr), next(nullptr), child(nullptr), key() {}
 	constexpr _Node(_Node&& other) noexcept = default;
 
 	// recursively create a deep copy of the node's subtree
 	_Node(const _Node& other) : key(other.key), value(other.value), parent(nullptr),
-		                        prev(nullptr), next(nullptr), child(nullptr) {
+		                        prev(nullptr), next(nullptr), child(nullptr)
+	{
 		if (other.child) {
 			_Node* prev_child = new _Node(*(other.child));
 			set_child(prev_child);
@@ -48,9 +49,7 @@ struct _Node {
 										                     prev(nullptr), next(nullptr), child(nullptr) {}
 
 	constexpr _Node(K&& key, value_type&& value): key(std::exchange(key, 0)), value(std::in_place, std::move(value)), parent(nullptr),
-										          prev(nullptr), next(nullptr), child(nullptr) {
-	}
-
+										          prev(nullptr), next(nullptr), child(nullptr) {}
 
 	// recursively destroy this node and its subtree
 	~_Node() {
@@ -80,7 +79,6 @@ struct _Node {
 		allocator_traits::deallocate(node_allocator, static_cast<_Node*>(p), 1);
 	}
 
-
 	// should only be used if no children are present
 	void set_child (_Node* other) {
 		assert(!child);
@@ -97,25 +95,13 @@ struct _Node {
 		next = other;
 	}
 
-	// doesn't check if has element, returns this node if key not found
-	_Node& find_child (const K& key) {
-		if (_Node* n = child) {
-			while (n != nullptr) {
-				if (n->key == key)
-					return n;
-				n = n->next;
-			}
-		}
-		return *this;
-	}
-
 }; // struct _Node
 
 // instantiate static allocator
 template<typename K,
-		 typename value_type,
+		 typename V,
 		 template<typename T> typename Alloc>
-Alloc<typename _Node<K, value_type, Alloc>> _Node<K, value_type, Alloc>::node_allocator;
+_Node<K, V, Alloc>::allocator_type _Node<K, V, Alloc>::node_allocator;
 
 } // namespace ltr
 

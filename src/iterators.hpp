@@ -12,7 +12,7 @@
 namespace ltr {
 
 // Bidirectional iterator class
-template<typename T,	// associated trie type
+template<typename N,	// associated node type
 		 bool is_const,
          bool is_reverse>
 class _Iterator_base {
@@ -23,30 +23,34 @@ private:
 
 	template<>
 	struct constness_struct<true> {
-		using get = typename const T::value_type;
+		using val = typename const N::value_type;
+		using ptr = typename const val*;
+		using ref = typename const val&;
 	};
 
 	template<>
 	struct constness_struct<false> {
-		using get_type = typename T::value_type;
+		using val = typename N::value_type;
+		using ptr = typename val*;
+		using ref = typename val&;
 	};
 
 	template<bool is_reverse>
 	struct reverseness_struct;
 
-	using node_type  = typename T::node_type;
+	using node_type  = typename N;
 	using mover_type = typename reverseness_struct<is_reverse>;
 public:
 	using difference_type   = typename std::ptrdiff_t;
-	using value_type        = typename constness_struct<is_const>::get_type;
-	using pointer           = typename value_type*;
-	using reference         = typename value_type&;
+	using value_type        = typename constness_struct<is_const>::val;
+	using pointer           = typename constness_struct<is_const>::ptr;
+	using reference         = typename constness_struct<is_const>::ref;
 	using iterator_category = typename std::bidirectional_iterator_tag;
 
 	_Iterator_base() noexcept : node(nullptr) {}
 	_Iterator_base(const _Iterator_base& other) = default;
 	_Iterator_base(node_type* node) : node(node) {}
-	_Iterator_base& operator=(const _Iterator_base & other) = default;
+	_Iterator_base& operator=(const _Iterator_base& other) = default;
 
 	reference operator*() {
 		return *(node->value);
@@ -56,12 +60,12 @@ public:
 		return node->value.operator->();
 	}
 
-	bool operator== (const _Iterator_base& rhs) {
-		return this->node == rhs.node;
+	friend bool operator==(const _Iterator_base& lhs, const _Iterator_base& rhs) {
+		return lhs.node == rhs.node;
 	}
 
-	bool operator!= (const _Iterator_base& rhs) {
-		return !(*this == rhs);
+	friend bool operator!=(const _Iterator_base& lhs, const _Iterator_base& rhs) {
+		return !(lhs == rhs);
 	}
 
 	_Iterator_base& operator++() {

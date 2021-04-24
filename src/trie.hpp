@@ -3,23 +3,12 @@
 #ifndef LTR_TRIE
 #define LTR_TRIE
 
-// from c++20 captureless lambdas are default constructible
-// but std::is_default_constructible still evaluated to false
-// hence the macro workaround
-// also msvc only partially supports c++20 as of the time of creation
-// hence __cplusplus is not raised to 202002L, so we check for greater than c++17
-#if __cplusplus > 201703L 
-#define ISCPP20 true
-#else
-#define ISCPP20 false
-#include <functional>
-#endif
-
 #include <utility>
 #include <string>
 #include <memory>
 #include <type_traits>
 #include <iostream>
+#include <initializer_list>
 
 #include "node.hpp"
 #include "iterators.hpp"
@@ -34,38 +23,118 @@ template<typename K,
 		 template<typename T>    typename Traits = std::char_traits,
 		 template<typename T>    typename Alloc  = std::allocator>
 class trie {
-private:
-	// forward declare concater struct
-	template<bool>
-	struct key_concater;
 public:
+
+	// ---------------- member types ---------------
+
 	using key_type               = typename Seq<K, Traits<K>, Alloc<K>>;
+	using mapped_type            = typename V;
 	using value_type             = typename std::pair<const key_type, V>;
-	using key_compare            = typename Comp<K>;
 	using key_concat             = typename Concat_expr_t;
-	using concat_type            = typename key_concater<ISCPP20>;
+	using size_type              = typename std::size_t;
+	using difference_type        = typename std::ptrdiff_t;
+	using key_compare            = typename Comp<K>;
+	using allocator_type         = typename Alloc<value_type>;
+	using reference              = typename value_type&;
+	using const_reference        = typename const value_type&;
+	using pointer                = typename std::allocator_traits<allocator_type>::pointer;
+	using const__pointer         = typename std::allocator_traits<allocator_type>::const_pointer;
 	using node_type              = typename _Node<K, value_type, Alloc>;
-	using iterator               = typename _Iterator_base<trie, false, false>;
-	using const_iterator         = typename _Iterator_base<trie, true, false>;
-	using reverse_iterator       = typename _Iterator_base<trie, false, true>;
-	using const_reverse_iterator = typename _Iterator_base<trie, true, true>;
+	using iterator               = typename _Iterator_base<node_type, false, false>;
+	using const_iterator         = typename _Iterator_base<node_type, true, false>;
+	using reverse_iterator       = typename _Iterator_base<node_type, false, true>;
+	using const_reverse_iterator = typename _Iterator_base<node_type, true, true>;
+	
+	// ----------- ctors and assignment ------------
 
 	constexpr trie() noexcept = delete;
-	trie(const trie& other) : _concat(other._concat), _root(new node_type(*(other._root))) {}
-	trie(trie&& other) = default;
-	trie& operator=(trie && other) = default;
-
-	trie& operator=(const trie& other) {
-		return trie(other);
+	trie(const key_concat& concat, const key_compare& comp = key_compare()) : _concat(concat), _comp(comp), _root(new node_type()) {
+		_root->value.emplace(std::make_pair("sajt", 42));
 	}
 
-	trie(const key_concat& concat) : _concat(concat), _root(new node_type()) {
-		_root->value.emplace(std::make_pair("sajt", 42));
+	template<typename InputIt>
+	trie(const key_concat& concat,
+		 InputIt first, InputIt last,
+		 const key_compare& comp = key_compare()) : trie(concat, comp)
+	{
+		for (InputIt it = first; it != last; ++it) {
+			// TODO
+		}
+	}
+	trie(const trie& other) : _concat(other._concat), _comp(other._comp), _root(new node_type(*(other._root))) {}
+	trie(trie&& other) = default;
+	trie(std::initializer_list<value_type> init,
+		 const key_concat& concat,
+		 const key_compare& comp = key_compare()) : trie(concat, comp)
+	{
+		for (const value_type& val : init) {
+			// TODO
+		}
 	}
 
 	~trie() {
 		delete _root;
 	}
+
+	trie& operator=(const trie& other) {
+		return trie(other);
+	}
+
+	trie& operator=(trie&& other) {
+		return trie(std::move(other));
+	}
+
+	trie& operator=(std::initializer_list<value_type> init) {
+		delete _root;
+		_root = new node_type();
+		for (const value_type& val : init) {
+			// TODO
+		}
+	}
+
+	// -------------- element access ---------------
+
+	mapped_type& at(const key_type& key) {
+
+	}
+
+	const mapped_type& at(const key_type& key) const {
+
+	}
+
+	mapped_type& operator[](const key_type& key) {
+
+	}
+
+	mapped_type& operator[](key_type&& key) {
+
+	}
+
+	// ----------------- capacity ------------------
+
+	bool empty() const noexcept {
+		return begin() == end();
+	}
+
+	size_type size() const {
+		return std::distance(begin(), end());
+	}
+
+	// max_size()
+
+	// ----------------- modifiers -----------------
+
+	void clear() {
+		node_type copy;
+		// dtor called at end of scope will destroy the tree below the root
+		// this over deleting and allocating root again, to not invalidate iterators poiting to end
+		copy.child = _root->child;
+		_root->child = nullptr;
+	}
+
+	// ------------------ lookup -------------------
+
+	// ----------------- iterators -----------------
 
 	iterator begin() {
 		iterator it(_root);
@@ -128,44 +197,11 @@ public:
 	}
 
 private:
-	// template struct with a condition based on whether the lambda is default constructible
-	template<>
-	struct key_concater<true> {
-		// if default constructible, no need to store as member
-		constexpr key_concater() noexcept = default;
-		constexpr key_concater(const key_concat&) noexcept {}
 
-		key_type operator()(node_type* node) const {
-			node_type* current = node;
-			key_type key;
-			while ((current->parent) != nullptr) {
-				key = key_concat{}(key, current->key);
-				current = current->parent;
-			}
-			return key;
-		}
-	};
-	template<>
-	struct key_concater<false> {
-		using func_type = typename std::function<key_type& (key_type&, K)>;
-		// if default constructible, no need to store as member
-		key_concater() noexcept = default;
-		key_concater(const key_concat& concat) : concat(concat) {}
-
-		key_type operator()(node_type* node) const {
-			node_type* current = node;
-			key_type key;
-			while ((current->parent) != nullptr) {
-				key = concat(key, current->key);
-				current = current->parent;
-			}
-			return key;
-		}
-		func_type concat;
-	};
-
-	concat_type _concat;
+	key_concat _concat;
 	node_type* _root;
+	const key_compare _comp;
+
 }; // class trie
 
 } // namespace ltr
