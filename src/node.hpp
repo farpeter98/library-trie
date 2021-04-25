@@ -103,8 +103,52 @@ struct _Node {
 		else if (parent)
 			this->parent->child = other;
 
+		other->parent = this->parent;
 		other->next = this;
 		this->prev = other;
+	}
+
+	// function to remove this node and all nodes whose
+	// only purpose was being a branch to this node
+	void remove_branch() {
+		_Node* top = this;
+		this->value.reset();
+		// traverse towards root until found a node with having a sibling or a value
+		while (top->parent && !(top->prev) && !(top->next) && !(top->value.has_value()))
+			top = top->parent;
+
+		// set subtree-to-delete as copy's child to set them to be deleted at end of scope
+		_Node copy;
+		// if top has a value only delete its children
+		if (top->value.has_value()) {
+			copy.child = top->child;
+			top->child = nullptr;
+		}
+		// has right sibling
+		else if (top->next) {
+			// if top has 2 siblings, remove top from between
+			if (top->prev) {
+				top->prev->next = top->next;
+				top->next->prev = top->prev;
+				top->prev = nullptr;
+			}
+			// if only rightside sibling is present, set parent's child to it
+			else {
+				top->parent->child = top->next;
+			}
+			top->next = nullptr;
+			copy.child = top;
+		}
+		// only left sibling
+		else if(top->prev) {
+			top->prev->next = nullptr;
+			top->prev = nullptr;
+			copy.child = top;
+		}
+		// top is root - can only occur if there was only 1 value present, hence top->child is always the node we came from
+		else {
+			copy.child = top->child;
+		}
 	}
 
 }; // struct _Node

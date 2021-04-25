@@ -279,10 +279,9 @@ x
   // one's. It is only the representation that is different, emphasising cache
   // locality and smaller memory footprint.
   default_template_parameters GTI(CharToStringConcat, std::less<char>());
-
-  /*
+ 
   assert(GTI.empty() && GTI.size() == 0 && GTI.count("whispy") == 0);
-  GTI.count(static_cast<void*>(0)); // !!! Should not compile.
+  //GTI.count(static_cast<void*>(0)); // !!! Should not compile.
 
   const decltype(GTI)& cGTI = GTI;
   // Callable on const.
@@ -309,7 +308,7 @@ x
   // already existing element.
   assert(InsertGSDAgain.second == false && InsertGSDAgain.first->second == 42);
 
-  cGTI.emplace("inserting into const should not happen", -1); // !!! Should not compile.
+  //cGTI.emplace("inserting into const should not happen", -1); // !!! Should not compile.
 
   try {
     GTI.at("foo");
@@ -327,21 +326,21 @@ x
   // operator[] will not return a default constructed T like it does for map,
   // but instead an optional!
   auto MaybeElement = GTI["gsd"];
-  static_assert(std::is_same_v<decltype(MaybeElement), optional<int>>);
+  //static_assert(std::is_same_v<decltype(MaybeElement), optional<int>>);
 
   // And because we return optional, operator[] is viable on const instances!
-  const auto MaybeElementOnConst = cGTI["abel"];
-  static_assert(std::is_same_v<decltype(MaybeElementOnConst),
-                               const optional<int>>);
+  //const auto MaybeElementOnConst = cGTI["abel"];
+  //static_assert(std::is_same_v<decltype(MaybeElementOnConst),
+  //                             const optional<int>>);
 
-  assert(MaybeElement.has_value() && MaybeElement.value() == 42);
-  assert(!MaybeElementOnConst.has_value() &&
-         MaybeElementOnConst.value_or(-1) == -1);
-  try {
+  //assert(MaybeElement.has_value() && MaybeElement.value() == 42);
+  //assert(!MaybeElementOnConst.has_value() &&
+  //       MaybeElementOnConst.value_or(-1) == -1);
+  /*try {
     GTI.emplace("This Element Does Not Exist", MaybeElementOnConst.value());
     assert(false && "Should have been unreachable.");
   } catch (std::bad_optional_access) {
-  }
+  }*/
 
   assert(cGTI.count("This Element Does Not Exist") == 0);
 
@@ -374,7 +373,6 @@ x
   Result.pop_back();
   Expected = "(abel->16),(gs->-24),(gsd->43),(whispy->69),(xazax->1337)";
   assert(Result == Expected);
-  */
   return 1;
 }
 

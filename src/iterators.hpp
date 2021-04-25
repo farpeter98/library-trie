@@ -47,10 +47,10 @@ public:
 	using reference         = typename constness_struct<is_const>::ref;
 	using iterator_category = typename std::bidirectional_iterator_tag;
 
-	_Iterator_base() noexcept : node(nullptr) {}
-	_Iterator_base(const _Iterator_base& other) = default;
-	_Iterator_base(node_type* node) : node(node) {}
-	_Iterator_base& operator=(const _Iterator_base& other) = default;
+	constexpr _Iterator_base() noexcept : node(nullptr) {}
+	constexpr _Iterator_base(const _Iterator_base& other) noexcept = default;
+	constexpr _Iterator_base(node_type* node) noexcept : node(node) {}
+	constexpr _Iterator_base& operator=(const _Iterator_base& other) noexcept = default;
 
 	reference operator*() {
 		return *(node->value);
@@ -68,26 +68,30 @@ public:
 		return !(lhs == rhs);
 	}
 
-	_Iterator_base& operator++() {
+	_Iterator_base& operator++() noexcept {
 		node = mover_type::increment(node);
 		return *this;
 	}
 
-	_Iterator_base operator++(int) {
+	_Iterator_base operator++(int) noexcept {
 		_Iterator_base old = *this;
 		operator++();
 		return old;
 	}
 
-	_Iterator_base& operator--() {
+	_Iterator_base& operator--() noexcept {
 		node = mover_type::decrement(node);
 		return *this;
 	}
 
-	_Iterator_base operator--(int) {
+	_Iterator_base operator--(int) noexcept {
 		_Iterator_base old = *this;
 		operator--();
 		return old;
+	}
+
+	constexpr friend node_type* get_node(_Iterator_base& it) noexcept {
+		return it.node;
 	}
 
 private:
@@ -99,7 +103,7 @@ private:
 		// from begin to end returns a lexicographically ordered sequence of keys
 		// some invariants: -node always either has value, or is the root
 		//                  -leaf nodes always have value, hence no check when descending to a leaf
-		static node_type* increment(node_type* node) {
+		static node_type* increment(node_type* node) noexcept {
 			// case 1: current node is not a leaf
 			if (node->child) {
 				node = node->child;
@@ -134,7 +138,7 @@ private:
 			return node;
 		}
 
-		static node_type* decrement(node_type* node) {
+		static node_type* decrement(node_type* node) noexcept {
 			// case 1: node has a left-side sibling - either leaf or intermediate node
 			if (node->prev) {
 				node = node->prev;

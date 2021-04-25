@@ -9,7 +9,7 @@
 #include <type_traits>
 #include <initializer_list>
 #include <stdexcept>
-#include <iostream>
+#include <algorithm>
 
 #include "node.hpp"
 #include "iterators.hpp"
@@ -24,6 +24,19 @@ template<typename K,
 		 template<typename T>    typename Traits = std::char_traits,
 		 template<typename T>    typename Alloc  = std::allocator>
 class trie {
+private:
+	template<typename, typename = void>
+	struct is_transparent {
+		static constexpr bool value = false;
+	};
+
+	template<typename T>
+	struct is_transparent<T, std::void_t<decltype(sizeof(T::is_transparent))>> {
+		static constexpr bool value = true;
+	};
+
+	static constexpr bool test = true;
+
 public:
 
 	// ---------------- member types ---------------
@@ -45,7 +58,7 @@ public:
 	using const_iterator         = typename _Iterator_base<node_type, true, false>;
 	using reverse_iterator       = typename _Iterator_base<node_type, false, true>;
 	using const_reverse_iterator = typename _Iterator_base<node_type, true, true>;
-	
+
 	// ----------- ctors and assignment ------------
 
 	constexpr trie() noexcept = delete;
@@ -53,22 +66,18 @@ public:
 
 	template<typename InputIt>
 	trie(const key_concat& concat,
-		 InputIt first, InputIt last,
-		 const key_compare& comp = key_compare()) : trie(concat, comp)
+		InputIt first, InputIt last,
+		const key_compare& comp = key_compare()) : trie(concat, comp)
 	{
-		for (InputIt it = first; it != last; ++it) {
-			emplace(*it);
-		}
+		insert(first, last);
 	}
 	trie(const trie& other) : _root(new node_type(*(other._root))), _concat(other._concat), _comp(other._comp) {}
 	trie(trie&& other) noexcept : _root(other._root), _concat(std::move(other._concat)), _comp(std::move(other._comp)) { other._root = nullptr; }
 	trie(std::initializer_list<value_type> init,
-		 const key_concat& concat,
-		 const key_compare& comp = key_compare()) : trie(concat, comp)
+		const key_concat& concat,
+		const key_compare& comp = key_compare()) : trie(concat, comp)
 	{
-		for (const value_type& val : init) {
-			insert(val);
-		}
+		insert(init);
 	}
 
 	~trie() {
@@ -80,7 +89,7 @@ public:
 	trie& operator=(const trie& other) {
 		if (this != &other) {
 			delete _root;
-			
+
 			// no need to copy _comp and _concat as the matching type ensures they are the same
 			_root = new node_type(*(other._root));
 		}
@@ -101,9 +110,8 @@ public:
 	trie& operator=(std::initializer_list<value_type> init) {
 		delete _root;
 		_root = new node_type();
-		for (const value_type& val : init) {
-			emplace(init);
-		}
+		insert(init);
+		return *this;
 	}
 
 	// -------------- element access ---------------
@@ -119,7 +127,7 @@ public:
 	const mapped_type& at(const key_type& key) const {
 		const std::pair<node_type*, bool>& result = std::move(try_find(key));
 		if (!result.second)
-			throw std::out_of_range();
+			throw std::out_of_range("invalid trie key");
 
 		return result.first->value->second;
 	}
@@ -138,6 +146,68 @@ public:
 		return target->value->second;
 	}
 
+	// ----------------- iterators -----------------
+
+	iterator begin() noexcept {
+		iterator it(_root);
+		++it;
+		return it;
+	}
+
+	const_iterator begin() const noexcept {
+		const_iterator it(_root);
+		++it;
+		return it;
+	}
+
+	const_iterator cbegin() const noexcept {
+		const_iterator it(_root);
+		++it;
+		return it;
+	}
+
+	reverse_iterator rbegin() noexcept {
+		reverse_iterator it(_root);
+		--it;
+		return it;
+	}
+
+	const_reverse_iterator rbegin() const noexcept {
+		const_reverse_iterator it(_root);
+		--it;
+		return it;
+	}
+
+	const_reverse_iterator crbegin() const noexcept {
+		const_reverse_iterator it(_root);
+		--it;
+		return it;
+	}
+
+	constexpr iterator end() noexcept {
+		return iterator(_root);
+	}
+
+	constexpr const_iterator end() const noexcept {
+		return const_iterator(_root);
+	}
+
+	constexpr const_iterator cend() const noexcept {
+		return const_iterator(_root);
+	}
+
+	constexpr reverse_iterator rend() noexcept {
+		return reverse_iterator(_root);
+	}
+
+	constexpr const_reverse_iterator rend() const noexcept {
+		return const_reverse_iterator(_root);
+	}
+
+	constexpr const_reverse_iterator crend() const noexcept {
+		return const_reverse_iterator(_root);
+	}
+
 	// ----------------- capacity ------------------
 
 	bool empty() const noexcept {
@@ -147,8 +217,6 @@ public:
 	size_type size() const {
 		return std::distance(begin(), end());
 	}
-
-	// max_size()
 
 	// ----------------- modifiers -----------------
 
@@ -162,114 +230,311 @@ public:
 
 	std::pair<iterator, bool> insert(const value_type& value) {
 		node_type* target = try_insert(value.first);
-		bool result = target->value.has_value();
-		if (!result)
+		bool has_value = target->value.has_value();
+		if (!has_value)
 			target->value.emplace(value);
-		return std::make_pair(std::move(iterator(target)), result);
+		return std::make_pair(std::move(iterator(target)), !has_value);
 	}
 
 	template<typename P,
-	         std::enable_if_t<std::is_constructible<value_type, P&&>::value, bool> = true>
-	std::pair<iterator, bool> insert(P&& value) {
+		std::enable_if_t<std::is_constructible<value_type, P&&>::value, bool> = true>
+		std::pair<iterator, bool> insert(P&& value) {
 		return emplace(std::forward<P>(value));
 	}
 
 	std::pair<iterator, bool> insert(value_type&& value) {
 		node_type* target = try_insert(value.first);
-		bool result = target->value.has_value();
-		if (!result)
+		bool has_value = target->value.has_value();
+		if (!has_value)
 			target->value.emplace(std::move(value));
-		return std::make_pair(std::move(iterator(target)), result);
+		return std::make_pair(std::move(iterator(target)), !has_value);
+	}
+
+	template<typename InputIt>
+	void insert(InputIt first, InputIt last) {
+		for (InputIt it = first; it != last; ++it) {
+			emplace(*it);
+		}
+	}
+
+	void insert(std::initializer_list<value_type> init) {
+		for (const value_type& val : init) {
+			emplace(val);
+		}
+	}
+
+	template<typename M,
+		std::enable_if_t<std::is_assignable<mapped_type&, M&&>::value, bool> = true>
+		std::pair<iterator, bool> insert_or_assign(const key_type& key, M&& obj) {
+		node_type* target = try_insert(key);
+		bool has_value = target->value.has_value();
+		target->value.emplace(value_type(key, std::forward<M>(obj)));
+		return std::make_pair(std::move(iterator(target)), !has_value);
+	}
+
+	template<typename M,
+		std::enable_if_t<std::is_assignable<mapped_type&, M&&>::value, bool> = true>
+		std::pair<iterator, bool> insert_or_assign(key_type&& key, M&& obj) {
+		node_type* target = try_insert(key);
+		bool has_value = target->value.has_value();
+		target->value.emplace(value_type(std::move(key), std::forward<M>(obj)));
+		return std::make_pair(std::move(iterator(target)), !has_value);
 	}
 
 	template<typename... Args>
 	std::pair<iterator, bool> emplace(Args&&... args) {
 		value_type value(std::forward<Args>(args)...);
 		node_type* target = try_insert(value.first);
-		bool result = target->value.has_value();
-		if (!result)
+		bool has_value = target->value.has_value();
+		if (!has_value)
 			target->value.emplace(std::move(value));
-		return std::make_pair(std::move(iterator(target)), result);
+		return std::make_pair(std::move(iterator(target)), !has_value);
 	}
 
 	template<typename... Args>
 	std::pair<iterator, bool> try_emplace(const key_type& key, Args&&... args) {
-
+		node_type* target = try_insert(key);
+		bool has_value = target->value.has_value();
+		if (!has_value) {
+			value_type value(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple(std::forward<Args>(args)...));
+			target->value.emplace(std::move(value));
+		}
+		return std::make_pair(std::move(iterator(target)), !has_value);
 	}
-	
+
+	template<typename... Args>
+	std::pair<iterator, bool> try_emplace(key_type&& key, Args&&... args) {
+		node_type* target = try_insert(key);
+		bool has_value = target->value.has_value();
+		if (!has_value) {
+			value_type value(std::piecewise_construct, std::forward_as_tuple(std::move(key)), std::forward_as_tuple(std::forward<Args>(args)...));
+			target->value.emplace(std::move(value));
+		}
+		return std::make_pair(std::move(iterator(target)), !has_value);
+	}
+
+	iterator erase(iterator pos) {
+		node_type* node = get_node(pos);
+		++pos;
+		// if node has a subtree, only remove the value
+		if (node->child)
+			node->value.reset();
+		// else remove the node and all now obsolete nodes
+		else
+			node->remove_branch();
+		return pos;
+	}
+
+	iterator erase(const_iterator first, const_iterator last) {
+		while (first != last) {
+			node_type* node = get_node(first);
+			++first;
+			if (node->child)
+				node->value.reset();
+			else
+				node->remove_branch();
+		}
+		return iterator(get_node(first));
+	}
+
+	size_type erase(const key_type& key) {
+		const std::pair<node_type*, bool>& result = try_find(key);
+		if (result.second && result.first->value.has_value()) {
+			if (result.first->child)
+				result.first->value.reset();
+			else
+				result.first->remove_branch();
+			return 1;
+		}
+		return 0;
+	}
+
+	constexpr void swap(trie& other) noexcept {
+		node_type* tmp = _root;
+		this->_root = other._root;
+		other._root = tmp;
+	}
+
 	// ------------------ lookup -------------------
 
-	size_type count(const key_type& key) {
+	size_type count(const key_type& key) const {
 		return try_find(key).second ? 1 : 0;
 	}
 
-	// ----------------- iterators -----------------
+	template<typename key_t, typename comp = key_compare,
+		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+	size_type count(const key_t& key) const {
+		return try_find<key_t>(key).second ? 1 : 0;
+	}
 
-	iterator begin() {
-		iterator it(_root);
-		++it;
+	iterator find(const key_type& key) {
+		const std::pair<node_type*, bool>& result = try_find(key);
+		if (result.second)
+			return iterator(result.first);
+		return end();
+	}
+
+	const_iterator find(const key_type& key) const {
+		const std::pair<node_type*, bool>& result = try_find(key);
+		if (result.second)
+			return const_iterator(result.first);
+		return cend();
+	}
+
+	template<typename key_t, typename comp = key_compare,
+		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+	iterator find(const key_t& key) {
+		const std::pair<node_type*, bool>& result = try_find<key_t>(key);
+		if (result.second)
+			return iterator(result.first);
+		return end();
+	}
+
+	template<typename key_t, typename comp = key_compare,
+		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+	const_iterator find(const key_t& key) const {
+		const std::pair<node_type*, bool>& result = try_find<key_t>(key);
+		if (result.second)
+			return const_iterator(result.first);
+		return cend();
+	}
+
+	bool contains(const key_type& key) const {
+		return try_find(key).second;
+	}
+
+	template<typename key_t, typename comp = key_compare,
+		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+	bool contains(const key_t& key) const {
+		return try_find<key_t>(key).second;
+	}
+
+	std::pair<iterator, iterator> equal_range(const key_type& key) {
+		return std::make_pair(lower_bound(key), upper_bound(key));
+	}
+
+	std::pair<const_iterator, const_iterator> equal_range(const key_type& key) const {
+		return std::make_pair(lower_bound(key), upper_bound(key));
+	}
+
+	template<typename key_t, typename comp = key_compare,
+		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+	std::pair<iterator, iterator> equal_range(const key_t& key) {
+		return std::make_pair(lower_bound<key_t>(key), upper_bound<key_t>(key));
+	}
+
+	template<typename key_t, typename comp = key_compare,
+		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+	std::pair<const_iterator, const_iterator> equal_range(const key_t& key) {
+		return std::make_pair(lower_bound<key_t>(key), upper_bound<key_t>(key));
+	}
+
+	iterator lower_bound(const key_type& key) {
+		iterator it = begin();
+		while (it->first < key)
+			++it;
 		return it;
 	}
-	
-	const_iterator begin() const {
-		const_iterator it(_root);
-		++it;
+
+	const_iterator lower_bound(const key_type& key) const {
+		const_iterator it = begin();
+		while (it->first < key)
+			++it;
 		return it;
 	}
 
-	const_iterator cbegin() const {
-		const_iterator it(_root);
-		++it;
+	template<typename key_t, typename comp = key_compare,
+		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+	iterator lower_bound(const key_t& key) {
+		iterator it = begin();
+		while (it->first < key)
+			++it;
 		return it;
 	}
 
-	reverse_iterator rbegin() {
-		reverse_iterator it(_root);
-		--it;
+	template<typename key_t, typename comp = key_compare,
+		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+	const_iterator lower_bound(const key_t& key) const {
+		const_iterator it = begin();
+		while (it->first < key)
+			++it;
 		return it;
 	}
 
-	const_reverse_iterator rbegin() const {
-		const_reverse_iterator it(_root);
-		--it;
+	iterator upper_bound(const key_type& key) {
+		iterator it = begin();
+		while (it->first <= key)
+			++it;
 		return it;
 	}
 
-	const_reverse_iterator crbegin() const {
-		const_reverse_iterator it(_root);
-		--it;
+	const_iterator upper_bound(const key_type& key) const {
+		const_iterator it = begin();
+		while (it->first <= key)
+			++it;
 		return it;
 	}
 
-	iterator end() {
-		return iterator(_root);
+	template<typename key_t, typename comp = key_compare,
+		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+	iterator upper_bound(const key_t& key) {
+		iterator it = begin();
+		while (it->first <= key)
+			++it;
+		return it;
 	}
 
-	const_iterator end() const {
-		return const_iterator(_root);
+	template<typename key_t, typename comp = key_compare,
+		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+	const_iterator upper_bound(const key_t& key) const {
+		const_iterator it = begin();
+		while (it->first <= key)
+			++it;
+		return it;
 	}
 
-	const_iterator cend() const {
-		return const_iterator(_root);
+	// ----------------- observers -----------------
+
+	key_compare key_comp() const {
+		return key_compare();
 	}
 
-	reverse_iterator rend() {
-		return reverse_iterator(_root);
+	// ----------------- nonmember -----------------
+
+	friend bool operator==(const trie& lhs, const trie& rhs) {
+		return !(lhs < rhs) && !(rhs < lhs);
 	}
 
-	const_reverse_iterator rend() const {
-		return const_reverse_iterator(_root);
+	friend bool operator!=(const trie& lhs, const trie& rhs) {
+		return !(lhs == rhs);
 	}
 
-	const_reverse_iterator crend() const {
-		return const_reverse_iterator(_root);
+	friend bool operator<(const trie& lhs, const trie& rhs) {
+		return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+	}
+
+	friend bool operator<=(const trie& lhs, const trie& rhs) {
+		return !(rhs < lhs);
+	}
+
+	friend bool operator>(const trie& lhs, const trie& rhs) {
+		return rhs < lhs;
+	}
+
+	friend bool operator>=(const trie& lhs, const trie& rhs) {
+		return !(lhs < rhs);
+	}
+
+	friend constexpr void swap(trie& lhs, trie& rhs) noexcept {
+		lhs.swap(rhs);
 	}
 
 private:
 
 	// function to find the node of the given key,
 	// creating the intermediate nodes in the process, if neccessary
-	node_type* try_insert(const key_type& key) {
+	template<typename key_t = typename key_type>
+	node_type* try_insert(const key_t& key) {
 		if (key.size() == 0)
 			throw std::invalid_argument("key must be of positive size");
 		node_type* current = _root;
@@ -314,7 +579,8 @@ private:
 	}
 
 	// similar to try_insert_key, but returns when creating a new node would be required
-	const std::pair<node_type*, bool> try_find(const key_type& key) const {
+	template<typename key_t = typename key_type>
+	const std::pair<node_type*, bool> try_find(const key_t& key) const {
 		if (key.size() == 0)
 			throw std::invalid_argument("key must be of positive size");
 		node_type* current = _root;
