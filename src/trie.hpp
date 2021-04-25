@@ -57,37 +57,52 @@ public:
 		 const key_compare& comp = key_compare()) : trie(concat, comp)
 	{
 		for (InputIt it = first; it != last; ++it) {
-			// TODO
+			emplace(*it);
 		}
 	}
-	trie(const trie& other) : _concat(other._concat), _comp(other._comp), _root(new node_type(*(other._root))) {}
-	trie(trie&& other) = default;
+	trie(const trie& other) : _root(new node_type(*(other._root))), _concat(other._concat), _comp(other._comp) {}
+	trie(trie&& other) noexcept : _root(other._root), _concat(std::move(other._concat)), _comp(std::move(other._comp)) { other._root = nullptr; }
 	trie(std::initializer_list<value_type> init,
 		 const key_concat& concat,
 		 const key_compare& comp = key_compare()) : trie(concat, comp)
 	{
 		for (const value_type& val : init) {
-			// TODO
+			insert(val);
 		}
 	}
 
 	~trie() {
-		delete _root;
+		// need nullptr check in case _root was taken by move
+		if (_root)
+			delete _root;
 	}
 
 	trie& operator=(const trie& other) {
-		return trie(other);
+		if (this != &other) {
+			delete _root;
+			
+			// no need to copy _comp and _concat as the matching type ensures they are the same
+			_root = new node_type(*(other._root));
+		}
+		return *this;
 	}
 
-	trie& operator=(trie&& other) {
-		return trie(std::move(other));
+	trie& operator=(trie&& other) noexcept {
+		if (this != &other) {
+			delete _root;
+
+			// no need to take _comp and _concat as the matching type ensures they are the same
+			_root = other._root;
+			other._root = nullptr;
+		}
+		return *this;
 	}
 
 	trie& operator=(std::initializer_list<value_type> init) {
 		delete _root;
 		_root = new node_type();
 		for (const value_type& val : init) {
-			// TODO
+			emplace(init);
 		}
 	}
 
@@ -150,6 +165,30 @@ public:
 		bool result = target->value.has_value();
 		if (!result)
 			target->value.emplace(value);
+		return std::make_pair(std::move(iterator(target)), result);
+	}
+
+	template<typename P,
+	         std::enable_if_t<std::is_constructible<value_type, P&&>::value, bool> = true>
+	std::pair<iterator, bool> insert(P&& value) {
+		return emplace(std::forward<P>(value));
+	}
+
+	std::pair<iterator, bool> insert(value_type&& value) {
+		node_type* target = try_insert(value.first);
+		bool result = target->value.has_value();
+		if (!result)
+			target->value.emplace(std::move(value));
+		return std::make_pair(std::move(iterator(target)), result);
+	}
+
+	template<typename... Args>
+	std::pair<iterator, bool> emplace(Args&&... args) {
+		value_type value(std::forward<Args>(args)...);
+		node_type* target = try_insert(value.first);
+		bool result = target->value.has_value();
+		if (!result)
+			target->value.emplace(std::move(value));
 		return std::make_pair(std::move(iterator(target)), result);
 	}
 

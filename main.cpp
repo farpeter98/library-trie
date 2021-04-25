@@ -280,40 +280,6 @@ x
   // locality and smaller memory footprint.
   default_template_parameters GTI(CharToStringConcat, std::less<char>());
 
-  std::cout << "trie swappable: " << std::is_swappable<default_template_parameters>::value << std::endl;
-  using it = typename default_template_parameters::iterator;
-  std::cout << "___iterator___" << std::endl;
-  std::cout << "copy_ctor: " << std::is_copy_constructible<it>::value << std::endl;
-  std::cout << "copy_assign: " << std::is_copy_assignable<it>::value << std::endl;
-  std::cout << "destructible: " << std::is_destructible<it>::value << std::endl;
-  std::cout << "swappable: " << std::is_swappable<it>::value << std::endl;
-
-  std::cout << "___forward_iterator___" << std::endl;
-  std::cout << "def_ctor: " << std::is_default_constructible<it>::value << std::endl;
-  static_assert(std::is_same_v<std::iterator_traits<it>::reference, std::iterator_traits<it>::value_type&>);
-  
-
-  default_template_parameters trie(CharToStringConcat);
-
-  trie.insert({ "key1", 1452 });
-  trie.insert({ "key2", 12321 });
-  trie.insert({ "key3", 1216 });
-  trie.insert({ "agas", 131 });
-  trie.insert({ "key4", 122 });
-  trie.insert({ "key4", 125122 });
-
-  trie.at("key1") = 79;
-  trie["key4"] = 69;
-  trie["key6"];
-
-  for (auto& val : trie) {
-      std::cout << val.first << " " << val.second << std::endl;
-  }
-
-  std::cout << std::endl << std::endl << std::endl;
-
-  std::cout << "size: " << trie.size() << std::endl;
-
   /*
   assert(GTI.empty() && GTI.size() == 0 && GTI.count("whispy") == 0);
   GTI.count(static_cast<void*>(0)); // !!! Should not compile.

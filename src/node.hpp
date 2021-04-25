@@ -25,7 +25,7 @@ struct _Node {
 	std::optional<value_type> value;
 
 	constexpr _Node() noexcept(noexcept(K())) : parent(nullptr), prev(nullptr), next(nullptr), child(nullptr), key() {}
-	constexpr _Node(_Node&& other) noexcept = default;
+	constexpr _Node(_Node&& other) = delete;
 
 	// recursively create a deep copy of the node's subtree
 	_Node(const _Node& other) : key(other.key), value(other.value), parent(nullptr),
@@ -64,12 +64,8 @@ struct _Node {
 		}
 	}
 
-
-	_Node& operator=(const _Node& other) {
-		return _Node(other);
-	}
-
-	constexpr _Node& operator=(_Node&& other) noexcept = default;
+	constexpr _Node& operator=(const _Node& other) = delete;
+	constexpr _Node& operator=(_Node&& other) = delete;
 
 	// new overload for convenient use
 	void* operator new (std::size_t size) {
