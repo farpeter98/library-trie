@@ -12,10 +12,10 @@
 namespace ltr {
 
 template<typename N, bool const_v>
-struct constness_struct;
+struct consted_type;
 
 template<typename N, bool reverse_v>
-struct reverseness_struct;
+struct reversed_type;
 
 // Bidirectional iterator class
 template<typename N,	// associated node type
@@ -24,12 +24,12 @@ template<typename N,	// associated node type
 class _Iterator_base {
 private:
 	using node_type  = N;
-	using mover_type = reverseness_struct<node_type, is_reverse>;
+	using mover_type = reversed_type<node_type, is_reverse>;
 public:
 	using difference_type   = std::ptrdiff_t;
-	using value_type        = typename constness_struct<N, is_const>::val;
-	using pointer           = typename constness_struct<N, is_const>::ptr;
-	using reference         = typename constness_struct<N, is_const>::ref;
+	using value_type        = typename consted_type<N, is_const>::val;
+	using pointer           = typename consted_type<N, is_const>::ptr;
+	using reference         = typename consted_type<N, is_const>::ref;
 	using iterator_category = std::bidirectional_iterator_tag;
 
 	constexpr _Iterator_base() noexcept : node(nullptr) {}
@@ -84,21 +84,21 @@ private:
 }; // class _Iterator_base
 
 template<typename N>
-struct constness_struct<N, true> {
+struct consted_type<N, true> {
 	using val = const typename N::value_type;
 	using ptr = const val*;
 	using ref = const val&;
 };
 
 template<typename N>
-struct constness_struct<N, false> {
+struct consted_type<N, false> {
 	using val = typename N::value_type;
 	using ptr = val*;
 	using ref = val&;
 };
 
 template<typename N>
-struct reverseness_struct<N, false> {
+struct reversed_type<N, false> {
 
 	// preorder-like tree traversal for next element containing a value
 	// from begin to end returns a lexicographically ordered sequence of keys
@@ -186,18 +186,18 @@ struct reverseness_struct<N, false> {
 		}
 		return node;
 	}
-};
+}; // struct reverseness_struct
 
 template<typename N>
-struct reverseness_struct<N, true> {
+struct reversed_type<N, true> {
 	static N* increment(N* node) {
-		return reverseness_struct<N, false>::decrement(node);
+		return reversed_type<N, false>::decrement(node);
 	}
 
 	static N* decrement(N* node) {
-		return reverseness_struct<N, false>::increment(node);
+		return reversed_type<N, false>::increment(node);
 	}
-};
+}; // struct reverseness_struct
 
 } // namespace ltr
 
