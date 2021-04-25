@@ -380,6 +380,27 @@ x
   Result.pop_back();
   Expected = "(abel->16),(gs->-24),(gsd->43),(whispy->69),(xazax->1337)";
   assert(Result == Expected);
+
+  using default_nocopy = trie<char, std::unique_ptr<int>, decltype(CharToStringConcat)>;
+
+  default_nocopy NonCopyableTrie(CharToStringConcat);
+  NonCopyableTrie.emplace("int1", std::make_unique<int>(1234));
+
+  //decltype(NonCopyableTrie) Copy2 = NonCopyableTrie;
+  // !!! Should not compile, unique_ptrs, and thus the nodes of it are not copyable!
+
+  decltype(NonCopyableTrie) Moved = std::move(NonCopyableTrie); // Should work.
+
+  OS.str("");
+  for (const decltype(Moved)::value_type& Elem : Moved) {
+      OS << '(' << Elem.first << "->" << *Elem.second << "),";
+  }
+  Result = OS.str();
+  Result.pop_back();
+  Expected = "(int1->1234)"; // Changing Copy doesn't change original obj.
+  assert(Result == Expected);
+
+
   return 1;
 }
 
