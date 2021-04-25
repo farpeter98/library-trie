@@ -264,8 +264,8 @@ public:
 	}
 
 	template<typename M,
-		std::enable_if_t<std::is_assignable<mapped_type&, M&&>::value, bool> = true>
-		std::pair<iterator, bool> insert_or_assign(const key_type& key, M&& obj) {
+		     std::enable_if_t<std::is_assignable<mapped_type&, M&&>::value, bool> = true>
+	std::pair<iterator, bool> insert_or_assign(const key_type& key, M&& obj) {
 		node_type* target = try_insert(key);
 		bool has_value = target->value.has_value();
 		target->value.emplace(value_type(key, std::forward<M>(obj)));
@@ -273,8 +273,8 @@ public:
 	}
 
 	template<typename M,
-		std::enable_if_t<std::is_assignable<mapped_type&, M&&>::value, bool> = true>
-		std::pair<iterator, bool> insert_or_assign(key_type&& key, M&& obj) {
+	         std::enable_if_t<std::is_assignable<mapped_type&, M&&>::value, bool> = true>
+	std::pair<iterator, bool> insert_or_assign(key_type&& key, M&& obj) {
 		node_type* target = try_insert(key);
 		bool has_value = target->value.has_value();
 		target->value.emplace(value_type(std::move(key), std::forward<M>(obj)));

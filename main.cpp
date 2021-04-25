@@ -325,6 +325,13 @@ x
   // This is where we diverge from the std::map interface a little bit.
   // operator[] will not return a default constructed T like it does for map,
   // but instead an optional!
+  // ----------------------- CREATORS NOTE -----------------------
+  // Since trie::return_type.second couldn't be a reference type, the tree
+  // nodes had to store the actual std::pair, to make it so that changes to
+  // pair.second are synced back to the nodes. This also means that with
+  // a non-reference mapped type optional these changes would not get synced back,
+  // thus I chose to stick with the std::map-like behaviour.
+  // ------------------------- NOTE END --------------------------
   auto MaybeElement = GTI["gsd"];
   //static_assert(std::is_same_v<decltype(MaybeElement), optional<int>>);
 
@@ -401,6 +408,5 @@ int main() {
   //  ++grade;
   if (generic())
     ++grade;
-  return 0;
   return grade;
 }
