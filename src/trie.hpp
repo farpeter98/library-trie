@@ -16,6 +16,16 @@
 
 namespace ltr {
 
+template<typename, typename = void>
+struct is_transparent {
+	static constexpr bool value = false;
+};
+
+template<typename T>
+struct is_transparent<T, std::void_t<decltype(sizeof(T::is_transparent))>> {
+	static constexpr bool value = true;
+};
+
 template<typename K,
 		 typename V,
 		 typename Concat_expr_t,
@@ -24,40 +34,27 @@ template<typename K,
 		 template<typename T>    typename Traits = std::char_traits,
 		 template<typename T>    typename Alloc  = std::allocator>
 class trie {
-private:
-	template<typename, typename = void>
-	struct is_transparent {
-		static constexpr bool value = false;
-	};
-
-	template<typename T>
-	struct is_transparent<T, std::void_t<decltype(sizeof(T::is_transparent))>> {
-		static constexpr bool value = true;
-	};
-
-	static constexpr bool test = true;
-
 public:
 
 	// ---------------- member types ---------------
 
-	using key_type               = typename Seq<K, Traits<K>, Alloc<K>>;
-	using mapped_type            = typename V;
-	using value_type             = typename std::pair<const key_type, V>;
-	using key_concat             = typename Concat_expr_t;
-	using size_type              = typename std::size_t;
-	using difference_type        = typename std::ptrdiff_t;
-	using key_compare            = typename Comp<K>;
-	using allocator_type         = typename Alloc<value_type>;
-	using reference              = typename value_type&;
-	using const_reference        = typename const value_type&;
+	using key_type               = Seq<K, Traits<K>, Alloc<K>>;
+	using mapped_type            = V;
+	using value_type             = std::pair<const key_type, V>;
+	using key_concat             = Concat_expr_t;
+	using size_type              = std::size_t;
+	using difference_type        = std::ptrdiff_t;
+	using key_compare            = Comp<K>;
+	using allocator_type         = Alloc<value_type>;
+	using reference              = value_type&;
+	using const_reference        = const value_type&;
 	using pointer                = typename std::allocator_traits<allocator_type>::pointer;
 	using const__pointer         = typename std::allocator_traits<allocator_type>::const_pointer;
-	using node_type              = typename _Node<K, value_type, Alloc>;
-	using iterator               = typename _Iterator_base<node_type, false, false>;
-	using const_iterator         = typename _Iterator_base<node_type, true, false>;
-	using reverse_iterator       = typename _Iterator_base<node_type, false, true>;
-	using const_reverse_iterator = typename _Iterator_base<node_type, true, true>;
+	using node_type              = _Node<K, value_type, Alloc>;
+	using iterator               = _Iterator_base<node_type, false, false>;
+	using const_iterator         = _Iterator_base<node_type, true, false>;
+	using reverse_iterator       = _Iterator_base<node_type, false, true>;
+	using const_reverse_iterator = _Iterator_base<node_type, true, true>;
 
 	// ----------- ctors and assignment ------------
 
@@ -533,7 +530,7 @@ private:
 
 	// function to find the node of the given key,
 	// creating the intermediate nodes in the process, if neccessary
-	template<typename key_t = typename key_type>
+	template<typename key_t = key_type>
 	node_type* try_insert(const key_t& key) {
 		if (key.size() == 0)
 			throw std::invalid_argument("key must be of positive size");
@@ -579,7 +576,7 @@ private:
 	}
 
 	// similar to try_insert_key, but returns when creating a new node would be required
-	template<typename key_t = typename key_type>
+	template<typename key_t = key_type>
 	const std::pair<node_type*, bool> try_find(const key_t& key) const {
 		if (key.size() == 0)
 			throw std::invalid_argument("key must be of positive size");

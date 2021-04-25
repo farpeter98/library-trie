@@ -13,10 +13,10 @@ template<typename K,
 		 template <typename T> typename Alloc>
 struct _Node {
 
-	using allocator_type   = typename Alloc<_Node>;
-	using allocator_traits = typename std::allocator_traits<allocator_type>;
-	using key_type         = typename K;
-	using value_type       = typename V;
+	using allocator_type   = Alloc<_Node>;
+	using allocator_traits = std::allocator_traits<allocator_type>;
+	using key_type         = K;
+	using value_type       = V;
 
 	static allocator_type node_allocator;
 
@@ -157,7 +157,7 @@ struct _Node {
 template<typename K,
 		 typename V,
 		 template<typename T> typename Alloc>
-_Node<K, V, Alloc>::allocator_type _Node<K, V, Alloc>::node_allocator;
+typename _Node<K, V, Alloc>::allocator_type _Node<K, V, Alloc>::node_allocator;
 
 } // namespace ltr
 
