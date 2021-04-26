@@ -589,7 +589,8 @@ private:
 			while (current->next && _comp(current->key, fragment))
 				current = current->next;
 
-			if (_comp(fragment, current->key))
+			// still need to check both _comp-s next might be nullptr
+			if (_comp(fragment, current->key) || _comp(current->key, fragment))
 				return std::make_pair(current, false);
 		}
 		return std::make_pair(current, current->value.has_value());
