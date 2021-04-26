@@ -359,7 +359,7 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+		     typename = typename comp::is_transparent>
 	size_type count(const key_t& key) const {
 		return try_find<key_t>(key).second ? 1 : 0;
 	}
@@ -379,7 +379,7 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+		     typename = typename comp::is_transparent>
 	iterator find(const key_t& key) {
 		const std::pair<node_type*, bool>& result = std::move(try_find<key_t>(key));
 		if (result.second)
@@ -388,7 +388,7 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+		     typename = typename comp::is_transparent>
 	const_iterator find(const key_t& key) const {
 		const std::pair<node_type*, bool>& result = std::move(try_find<key_t>(key));
 		if (result.second)
@@ -401,7 +401,7 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+		     typename = typename comp::is_transparent>
 	bool contains(const key_t& key) const {
 		return try_find<key_t>(key).second;
 	}
@@ -415,13 +415,13 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+		     typename = typename comp::is_transparent>
 	std::pair<iterator, iterator> equal_range(const key_t& key) {
 		return std::make_pair(lower_bound<key_t>(key), upper_bound<key_t>(key));
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+		     typename = typename comp::is_transparent>
 	std::pair<const_iterator, const_iterator> equal_range(const key_t& key) {
 		return std::make_pair(lower_bound<key_t>(key), upper_bound<key_t>(key));
 	}
@@ -441,7 +441,7 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+		     typename = typename comp::is_transparent>
 	iterator lower_bound(const key_t& key) {
 		iterator it = begin();
 		while (it->first < key)
@@ -450,7 +450,7 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+		     typename = typename comp::is_transparent>
 	const_iterator lower_bound(const key_t& key) const {
 		const_iterator it = begin();
 		while (it->first < key)
@@ -482,7 +482,7 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+		     typename = typename comp::is_transparent>
 	const_iterator upper_bound(const key_t& key) const {
 		const_iterator it = begin();
 		while (it->first <= key)
@@ -530,8 +530,7 @@ private:
 
 	// function to find the node of the given key,
 	// creating the intermediate nodes in the process, if neccessary
-	template<typename key_t = key_type>
-	node_type* try_insert(const key_t& key) {
+	node_type* try_insert(const key_type& key) {
 		if (key.size() == 0)
 			throw std::invalid_argument("key must be of positive size");
 		node_type* current = _root;
@@ -575,9 +574,20 @@ private:
 		return current;
 	}
 
-	// similar to try_insert_key, but returns when creating a new node would be required
-	template<typename key_t = key_type>
+	// for general keys lookup compares to the entire key, not per-fragment
+	// which requires the comparator to also provide comparison for key_type, not just K
+	template<typename key_t>
 	const std::pair<node_type*, bool> try_find(const key_t& key) const {
+		for (const_iterator it = cbegin(); it != cend(); ++it) {
+			if (!_comp(key, it->first) && !_comp(it->first, key))
+				return std::make_pair(get_node(it), true);
+		}
+		return std::make_pair(_root, false);
+	}
+
+	// similar to try_insert_key, but returns when creating a new node would be required
+	template<>
+	const std::pair<node_type*, bool> try_find(const key_type& key) const {
 		if (key.size() == 0)
 			throw std::invalid_argument("key must be of positive size");
 		node_type* current = _root;
