@@ -135,6 +135,7 @@ struct _Node {
 			}
 			// if only rightside sibling is present, set parent's child to it
 			else {
+				top->next->prev = nullptr;
 				top->parent->child = top->next;
 			}
 			top->next = nullptr;
