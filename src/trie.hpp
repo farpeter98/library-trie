@@ -165,19 +165,19 @@ public:
 
 	reverse_iterator rbegin() noexcept {
 		reverse_iterator it(_root);
-		--it;
+		++it;
 		return it;
 	}
 
 	const_reverse_iterator rbegin() const noexcept {
 		const_reverse_iterator it(_root);
-		--it;
+		++it;
 		return it;
 	}
 
 	const_reverse_iterator crbegin() const noexcept {
 		const_reverse_iterator it(_root);
-		--it;
+		++it;
 		return it;
 	}
 
@@ -235,7 +235,7 @@ public:
 
 	template<typename P,
 		std::enable_if_t<std::is_constructible<value_type, P&&>::value, bool> = true>
-		std::pair<iterator, bool> insert(P&& value) {
+	std::pair<iterator, bool> insert(P&& value) {
 		return emplace(std::forward<P>(value));
 	}
 
@@ -335,7 +335,7 @@ public:
 	}
 
 	size_type erase(const key_type& key) {
-		const std::pair<node_type*, bool>& result = try_find(key);
+		const std::pair<node_type*, bool>& result = std::move(try_find(key));
 		if (result.second && result.first->value.has_value()) {
 			if (result.first->child)
 				result.first->value.reset();
@@ -365,14 +365,14 @@ public:
 	}
 
 	iterator find(const key_type& key) {
-		const std::pair<node_type*, bool>& result = try_find(key);
+		const std::pair<node_type*, bool>& result = std::move(try_find(key));
 		if (result.second)
 			return iterator(result.first);
 		return end();
 	}
 
 	const_iterator find(const key_type& key) const {
-		const std::pair<node_type*, bool>& result = try_find(key);
+		const std::pair<node_type*, bool>& result = std::move(try_find(key));
 		if (result.second)
 			return const_iterator(result.first);
 		return cend();
@@ -381,7 +381,7 @@ public:
 	template<typename key_t, typename comp = key_compare,
 		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
 	iterator find(const key_t& key) {
-		const std::pair<node_type*, bool>& result = try_find<key_t>(key);
+		const std::pair<node_type*, bool>& result = std::move(try_find<key_t>(key));
 		if (result.second)
 			return iterator(result.first);
 		return end();
@@ -390,7 +390,7 @@ public:
 	template<typename key_t, typename comp = key_compare,
 		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
 	const_iterator find(const key_t& key) const {
-		const std::pair<node_type*, bool>& result = try_find<key_t>(key);
+		const std::pair<node_type*, bool>& result = std::move(try_find<key_t>(key));
 		if (result.second)
 			return const_iterator(result.first);
 		return cend();
