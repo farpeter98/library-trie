@@ -428,14 +428,14 @@ public:
 
 	iterator lower_bound(const key_type& key) {
 		iterator it = begin();
-		while (it->first < key)
+		while (get_node(it) != _root && _comp(it->first, key))
 			++it;
 		return it;
 	}
 
 	const_iterator lower_bound(const key_type& key) const {
 		const_iterator it = begin();
-		while (it->first < key)
+		while (get_node(it) != _root && _comp(it->first, key))
 			++it;
 		return it;
 	}
@@ -444,7 +444,7 @@ public:
 		     typename = typename comp::is_transparent>
 	iterator lower_bound(const key_t& key) {
 		iterator it = begin();
-		while (it->first < key)
+		while (get_node(it) != _root && _comp(it->first, key))
 			++it;
 		return it;
 	}
@@ -453,21 +453,21 @@ public:
 		     typename = typename comp::is_transparent>
 	const_iterator lower_bound(const key_t& key) const {
 		const_iterator it = begin();
-		while (it->first < key)
+		while (get_node(it) != _root && _comp(it->first, key))
 			++it;
 		return it;
 	}
 
 	iterator upper_bound(const key_type& key) {
 		iterator it = begin();
-		while (it->first <= key)
+		while (get_node(it) != _root && !_comp(key, it->first))
 			++it;
 		return it;
 	}
 
 	const_iterator upper_bound(const key_type& key) const {
 		const_iterator it = begin();
-		while (it->first <= key)
+		while (get_node(it) != _root && !_comp(key, it->first))
 			++it;
 		return it;
 	}
@@ -476,7 +476,7 @@ public:
 		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
 	iterator upper_bound(const key_t& key) {
 		iterator it = begin();
-		while (it->first <= key)
+		while (get_node(it) != _root && !_comp(key, it->first))
 			++it;
 		return it;
 	}
@@ -485,7 +485,7 @@ public:
 		     typename = typename comp::is_transparent>
 	const_iterator upper_bound(const key_t& key) const {
 		const_iterator it = begin();
-		while (it->first <= key)
+		while (get_node(it) != _root && !_comp(key, it->first))
 			++it;
 		return it;
 	}
