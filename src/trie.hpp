@@ -208,7 +208,7 @@ public:
 	// ----------------- capacity ------------------
 
 	bool empty() const noexcept {
-		return begin() == end();
+		return _root->child == nullptr;
 	}
 
 	size_type size() const {

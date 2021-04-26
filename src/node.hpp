@@ -150,6 +150,7 @@ struct _Node {
 		// top is root - can only occur if there was only 1 value present, hence top->child is always the node we came from
 		else {
 			copy.child = top->child;
+			top->child = nullptr;
 		}
 	}
 
