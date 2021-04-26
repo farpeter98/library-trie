@@ -422,7 +422,7 @@ public:
 
 	template<typename key_t, typename comp = key_compare,
 		     typename = typename comp::is_transparent>
-	std::pair<const_iterator, const_iterator> equal_range(const key_t& key) {
+	std::pair<const_iterator, const_iterator> equal_range(const key_t& key) const {
 		return std::make_pair(lower_bound<key_t>(key), upper_bound<key_t>(key));
 	}
 
