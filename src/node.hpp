@@ -5,6 +5,7 @@
 
 #include <utility>
 #include <memory>
+#include <optional>
 
 namespace ltr {
 
