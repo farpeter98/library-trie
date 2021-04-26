@@ -473,7 +473,7 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     std::enable_if_t<is_transparent<comp>::value, bool> = true>
+		     typename = typename comp::is_transparent>
 	iterator upper_bound(const key_t& key) {
 		iterator it = begin();
 		while (get_node(it) != _root && !_comp(key, it->first))
