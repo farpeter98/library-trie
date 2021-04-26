@@ -586,7 +586,6 @@ private:
 	}
 
 	// similar to try_insert_key, but returns when creating a new node would be required
-	template<>
 	const std::pair<node_type*, bool> try_find(const key_type& key) const {
 		if (key.size() == 0)
 			throw std::invalid_argument("key must be of positive size");
