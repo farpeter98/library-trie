@@ -359,9 +359,10 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     typename = typename comp::is_transparent>
+		     typename = typename comp::is_transparent,
+		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
 	size_type count(const key_t& key) const {
-		return try_find<key_t>(key).second ? 1 : 0;
+		return try_find<key_t, comp>(key).second ? 1 : 0;
 	}
 
 	iterator find(const key_type& key) {
@@ -379,18 +380,20 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     typename = typename comp::is_transparent>
+		     typename = typename comp::is_transparent,
+		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
 	iterator find(const key_t& key) {
-		const std::pair<node_type*, bool>& result = std::move(try_find<key_t>(key));
+		const std::pair<node_type*, bool>& result = std::move(try_find<key_t, comp>(key));
 		if (result.second)
 			return iterator(result.first);
 		return end();
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     typename = typename comp::is_transparent>
+		     typename = typename comp::is_transparent,
+		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
 	const_iterator find(const key_t& key) const {
-		const std::pair<node_type*, bool>& result = std::move(try_find<key_t>(key));
+		const std::pair<node_type*, bool>& result = std::move(try_find<key_t, comp>(key));
 		if (result.second)
 			return const_iterator(result.first);
 		return cend();
@@ -401,9 +404,10 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     typename = typename comp::is_transparent>
+		     typename = typename comp::is_transparent,
+		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
 	bool contains(const key_t& key) const {
-		return try_find<key_t>(key).second;
+		return try_find<key_t, comp>(key).second;
 	}
 
 	std::pair<iterator, iterator> equal_range(const key_type& key) {
@@ -415,15 +419,17 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     typename = typename comp::is_transparent>
+		     typename = typename comp::is_transparent,
+		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
 	std::pair<iterator, iterator> equal_range(const key_t& key) {
-		return std::make_pair(lower_bound<key_t>(key), upper_bound<key_t>(key));
+		return std::make_pair(lower_bound<key_t, comp>(key), upper_bound<key_t, comp>(key));
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     typename = typename comp::is_transparent>
+		     typename = typename comp::is_transparent,
+		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
 	std::pair<const_iterator, const_iterator> equal_range(const key_t& key) const {
-		return std::make_pair(lower_bound<key_t>(key), upper_bound<key_t>(key));
+		return std::make_pair(lower_bound<key_t, comp>(key), upper_bound<key_t, comp>(key));
 	}
 
 	iterator lower_bound(const key_type& key) {
@@ -441,19 +447,23 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     typename = typename comp::is_transparent>
+		     typename = typename comp::is_transparent,
+		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
 	iterator lower_bound(const key_t& key) {
 		iterator it = begin();
-		while (get_node(it) != _root && _comp(it->first, key))
+		comp instance{};
+		while (get_node(it) != _root && instance(it->first, key))
 			++it;
 		return it;
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     typename = typename comp::is_transparent>
+		     typename = typename comp::is_transparent,
+		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
 	const_iterator lower_bound(const key_t& key) const {
 		const_iterator it = begin();
-		while (get_node(it) != _root && _comp(it->first, key))
+		comp instance{};
+		while (get_node(it) != _root && instance(it->first, key))
 			++it;
 		return it;
 	}
@@ -473,19 +483,23 @@ public:
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     typename = typename comp::is_transparent>
+		     typename = typename comp::is_transparent,
+	         std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
 	iterator upper_bound(const key_t& key) {
 		iterator it = begin();
-		while (get_node(it) != _root && !_comp(key, it->first))
+		comp instance{};
+		while (get_node(it) != _root && !instance(key, it->first))
 			++it;
 		return it;
 	}
 
 	template<typename key_t, typename comp = key_compare,
-		     typename = typename comp::is_transparent>
+		     typename = typename comp::is_transparent,
+		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
 	const_iterator upper_bound(const key_t& key) const {
 		const_iterator it = begin();
-		while (get_node(it) != _root && !_comp(key, it->first))
+		comp instance{};
+		while (get_node(it) != _root && !instance(key, it->first))
 			++it;
 		return it;
 	}
@@ -576,10 +590,12 @@ private:
 
 	// for general keys lookup compares to the entire key, not per-fragment
 	// which requires the comparator to also provide comparison for key_type, not just K
-	template<typename key_t>
+	template<typename key_t, typename comp,
+		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
 	const std::pair<node_type*, bool> try_find(const key_t& key) const {
+		comp instance{};
 		for (const_iterator it = cbegin(); it != cend(); ++it) {
-			if (!_comp(key, it->first) && !_comp(it->first, key))
+			if (!instance(key, it->first) && !instance(it->first, key))
 				return std::make_pair(get_node(it), true);
 		}
 		return std::make_pair(_root, false);

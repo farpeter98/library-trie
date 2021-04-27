@@ -312,6 +312,17 @@ void TestLookup() {
     // search using transparent key which is string.length in our case
     assert(trie.count(3) == 1);
 
+    default_trie def {{{"abc",    31},
+                       {"abcd",   5112},
+                       {"abcde",  51},
+                       {"bcd",    72},
+                       {"bcde",   72},
+                       {"hgasha", 80}}, concat };
+
+    // for transparent keys custom comparators can be passed
+    std::size_t res = def.count<std::size_t, transparent_compare<char>>(3);
+    assert(res == 1);
+
     allow_transparent::iterator result = trie.find("bcd");
     assert(result != trie.end() && result->second == 72);
     result->second = 58;
