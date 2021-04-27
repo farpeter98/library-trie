@@ -75,7 +75,7 @@ public:
 		return old;
 	}
 
-	constexpr friend node_type* get_node(_Iterator_base& it) noexcept {
+	constexpr friend node_type* get_node(const _Iterator_base& it) noexcept {
 		return it.node;
 	}
 

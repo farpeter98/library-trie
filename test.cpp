@@ -287,10 +287,6 @@ struct transparent_compare{
         return lhs < rhs.size();
     }
 
-    bool operator()(const std::string& lhs, const std::string& rhs) const {
-        return lhs < rhs;
-    }
-
     bool operator()(const T& lhs, const T& rhs) const {
         return lhs < rhs;
     }
@@ -298,20 +294,12 @@ struct transparent_compare{
 
 void TestLookup() {
     using allow_transparent = trie<char, int, decltype(concat), transparent_compare>;
-    allow_transparent trie{{{"abc",   31},
-                            {"abcd",   5112},
-                            {"abcde",  51},
-                            {"bcd",    72},
-                            {"bcde",   72},
-                            {"hgasha", 80}}, concat };
-    // even for multiple possible matches, count should only return 0 or 1 which might
-    // seem weird but it's due to string.length() hardly being a unique key
-
-    assert(trie.count("abc") == 1);
-    assert(trie.count("abf") == 0);
-    // search using transparent key which is string.length in our case
-    assert(trie.count(3) == 1);
-
+    allow_transparent trans{{{"abc",   31},
+                             {"abcd",   5112},
+                             {"abcde",  51},
+                             {"bcd",    72},
+                             {"bcde",   72},
+                             {"hgasha", 80}}, concat };
     default_trie def {{{"abc",    31},
                        {"abcd",   5112},
                        {"abcde",  51},
@@ -319,55 +307,63 @@ void TestLookup() {
                        {"bcde",   72},
                        {"hgasha", 80}}, concat };
 
+    // even for multiple possible matches, count should only return 0 or 1 which might
+    // seem weird but it's due to string.length() hardly being a unique key
+    assert(def.count("abc") == 1);
+    assert(def.count("abf") == 0);
+    // search using transparent key which is string.length in our case
+    assert(trans.count(3) == 1);
+
     // for transparent keys custom comparators can be passed
     std::size_t res = def.count<std::size_t, transparent_compare<char>>(3);
     assert(res == 1);
 
-    allow_transparent::iterator result = trie.find("bcd");
-    assert(result != trie.end() && result->second == 72);
+    allow_transparent::iterator result = def.find("bcd");
+    assert(result != def.end() && result->second == 72);
     result->second = 58;
-    assert(trie.find("bcd")->second == 58);
-    const allow_transparent ctrie = trie;
+    assert(def.find("bcd")->second == 58);
+    const allow_transparent ctrie = trans;
 
-    allow_transparent::const_iterator cresult = ctrie.find("nope");
+    // note that without using std::string explicitly, this binds to transparent lookup when it's enabled
+    allow_transparent::const_iterator cresult = ctrie.find(std::string("nope"));
     assert(cresult == ctrie.end());
     // transparent lookup based on string.length will find the first key with matching length
     // called on both const and regular trie for different template instantiation
-    assert(trie.find(4)->first == "abcd");
+    assert(trans.find(4)->first == "abcd");
     assert(ctrie.find(5)->first == "abcde");
 
-    assert(trie.contains("bcd") && !trie.contains("nope"));
-    assert(trie.contains(3) && !trie.contains(2));
+    assert(def.contains("bcd") && !def.contains("nope"));
+    assert(trans.contains(3) && !trans.contains(2));
 
     // called on both const and regular for reasons same as before
-    assert(trie.lower_bound("bcd")->first == "bcd");
-    assert(trie.lower_bound("x") == trie.end());
-    assert(trie.lower_bound(1)->first == "abc");
-    assert(ctrie.lower_bound("bcd")->first == "bcd");
-    assert(ctrie.lower_bound("x") == ctrie.end());
+    assert(def.lower_bound("bcd")->first == "bcd");
+    assert(def.lower_bound("x") == def.end());
+    assert(trans.lower_bound(1)->first == "abc");
+    assert(ctrie.lower_bound(std::string("bcd"))->first == "bcd");
+    assert(ctrie.lower_bound(std::string("x")) == ctrie.end());
     assert(ctrie.lower_bound(1)->first == "abc");
 
     // similar to lower_bound, but returns the first greater key instead of not less
-    assert(trie.upper_bound("bcd")->first == "bcde");
-    assert(trie.upper_bound("x") == trie.end());
-    assert(trie.upper_bound(1)->first == "abc");
-    assert(ctrie.upper_bound("bcd")->first == "bcde");
-    assert(ctrie.upper_bound("x") == ctrie.end());
+    assert(def.upper_bound("bcd")->first == "bcde");
+    assert(def.upper_bound("x") == def.end());
+    assert(trans.upper_bound(1)->first == "abc");
+    assert(ctrie.upper_bound(std::string("bcd"))->first == "bcde");
+    assert(ctrie.upper_bound(std::string("x")) == ctrie.end());
     assert(ctrie.upper_bound(1)->first == "abc");
 
-    std::pair<allow_transparent::iterator, allow_transparent::iterator> resultPair = trie.equal_range("bcd");
+    std::pair<allow_transparent::iterator, allow_transparent::iterator> resultPair = def.equal_range("bcd");
     assert(resultPair.first->first == "bcd" && resultPair.second->first == "bcde");
 
-    resultPair = trie.equal_range("x");
-    assert(resultPair.first == trie.end() && resultPair.second == trie.end());
+    resultPair = def.equal_range("x");
+    assert(resultPair.first == def.end() && resultPair.second == def.end());
 
-    resultPair = trie.equal_range(3);
+    resultPair = trans.equal_range(3);
     assert(resultPair.first->first == "abc" && resultPair.second->first == "abcd");
 
-    std::pair<allow_transparent::const_iterator, allow_transparent::const_iterator> cresultPair = ctrie.equal_range("bcd");
+    std::pair<allow_transparent::const_iterator, allow_transparent::const_iterator> cresultPair = ctrie.equal_range(std::string("bcd"));
     assert(cresultPair.first->first == "bcd" && cresultPair.second->first == "bcde");
 
-    cresultPair = ctrie.equal_range("x");
+    cresultPair = ctrie.equal_range(std::string("x"));
     assert(cresultPair.first == ctrie.end() && cresultPair.second == ctrie.end());
 
     cresultPair = ctrie.equal_range(3);

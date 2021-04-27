@@ -433,17 +433,19 @@ public:
 	}
 
 	iterator lower_bound(const key_type& key) {
-		iterator it = begin();
-		while (get_node(it) != _root && _comp(it->first, key))
-			++it;
-		return it;
+		const std::pair<node_type*, bool>& result = try_find(key);
+		if (result.second)
+			return iterator(result.first);
+		node_type* node = result.first;
+		return iterator(find_next(key, node));
 	}
 
 	const_iterator lower_bound(const key_type& key) const {
-		const_iterator it = begin();
-		while (get_node(it) != _root && _comp(it->first, key))
-			++it;
-		return it;
+		const std::pair<node_type*, bool>& result = try_find(key);
+		if (result.second)
+			return const_iterator(result.first);
+		node_type* node = result.first;
+		return const_iterator(find_next(key, node));
 	}
 
 	template<typename key_t, typename comp = key_compare,
@@ -469,17 +471,21 @@ public:
 	}
 
 	iterator upper_bound(const key_type& key) {
-		iterator it = begin();
-		while (get_node(it) != _root && !_comp(key, it->first))
-			++it;
-		return it;
+		const std::pair<node_type*, bool>& result = try_find(key);
+		if (result.second) {
+			return ++iterator(result.first);
+		}
+		node_type* node = result.first;
+		return iterator(find_next(key, node));
 	}
 
 	const_iterator upper_bound(const key_type& key) const {
-		const_iterator it = begin();
-		while (get_node(it) != _root && !_comp(key, it->first))
-			++it;
-		return it;
+		const std::pair<node_type*, bool>& result = try_find(key);
+		if (result.second) {
+			return ++const_iterator(result.first);
+		}
+		node_type* node = result.first;
+		return const_iterator(find_next(key, node));
 	}
 
 	template<typename key_t, typename comp = key_compare,
@@ -619,6 +625,64 @@ private:
 				return std::make_pair(current, false);
 		}
 		return std::make_pair(current, current->value.has_value());
+	}
+
+	// helper function used for bounds functions
+	// the param node is presumably supplied by try_find
+	node_type* find_next(const key_type& key, node_type* node) const {
+		// early check for root
+		if (node == _root)
+			return node;
+
+		node_type* current = node;
+		// first exit point of try_find -> here key definitely is smaller
+		if (current->child == nullptr) {
+			while (current->parent != nullptr && current->next == nullptr)
+				current = current->parent;
+			if (current->next) {
+				current = current->next;
+				// no need to check if child is nullptr, because leaves always contain a value
+				while (!current->value.has_value())
+					current = current->child;
+			}
+			// this might return _root
+			return current;
+		}
+		// second exit point, current can be either greater or less
+		// if next is not nullptr, current node is always greater
+		if (current->next != nullptr) {
+			while (!current->value.has_value())
+				current = current->child;
+			return current;
+		}
+		
+		// find out if the key was smaller or greater
+		// first get to the mismatched char
+		auto it = key.begin();
+		node_type* temp = current;
+		// checking for temp == _root would cause one more increment than neccessary
+		// rather have it this way than requiring the iterator to be bidirectional
+		while (temp->parent != _root) {
+			++it;
+			temp = temp->parent;
+		}
+		// node's key was smaller, same as at first exit point
+		if (_comp(current->key, *it)) {
+			while (current->parent != nullptr && current->next == nullptr)
+				current = current->parent;
+			if (current->next) {
+				current = current->next;
+				while (!current->value.has_value())
+					current = current->child;
+			}
+			// this might return _root
+			return current;
+		}
+		// node's key was greater, find first value in subtree
+		// since key was not found equality can never occur
+		while (!current->value.has_value())
+			current = current->child;
+		return current;
 	}
 
 	key_concat _concat;
