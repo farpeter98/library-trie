@@ -360,7 +360,10 @@ public:
 
 	template<typename key_t, typename comp = key_compare,
 		     typename = typename comp::is_transparent,
-		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
+		     std::enable_if_t<std::conjunction_v<
+		                      std::is_default_constructible<comp>,
+			                  std::negation<std::is_convertible<key_t, key_type>>>,
+		     bool> = true>
 	size_type count(const key_t& key) const {
 		return try_find<key_t, comp>(key).second ? 1 : 0;
 	}
@@ -381,7 +384,9 @@ public:
 
 	template<typename key_t, typename comp = key_compare,
 		     typename = typename comp::is_transparent,
-		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
+		     std::enable_if_t<std::conjunction_v<std::is_default_constructible<comp>,
+		                                         std::negation<std::is_convertible<key_t, key_type>>>,
+		     bool> = true>
 	iterator find(const key_t& key) {
 		const std::pair<node_type*, bool>& result = std::move(try_find<key_t, comp>(key));
 		if (result.second)
@@ -391,7 +396,9 @@ public:
 
 	template<typename key_t, typename comp = key_compare,
 		     typename = typename comp::is_transparent,
-		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
+		     std::enable_if_t<std::conjunction_v<std::is_default_constructible<comp>,
+		                                         std::negation<std::is_convertible<key_t, key_type>>>,
+		     bool> = true>
 	const_iterator find(const key_t& key) const {
 		const std::pair<node_type*, bool>& result = std::move(try_find<key_t, comp>(key));
 		if (result.second)
@@ -405,7 +412,9 @@ public:
 
 	template<typename key_t, typename comp = key_compare,
 		     typename = typename comp::is_transparent,
-		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
+		     std::enable_if_t<std::conjunction_v<std::is_default_constructible<comp>,
+		                                         std::negation<std::is_convertible<key_t, key_type>>>,
+		     bool> = true>
 	bool contains(const key_t& key) const {
 		return try_find<key_t, comp>(key).second;
 	}
@@ -420,14 +429,18 @@ public:
 
 	template<typename key_t, typename comp = key_compare,
 		     typename = typename comp::is_transparent,
-		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
+		     std::enable_if_t<std::conjunction_v<std::is_default_constructible<comp>,
+		                                         std::negation<std::is_convertible<key_t, key_type>>>,
+		     bool> = true>
 	std::pair<iterator, iterator> equal_range(const key_t& key) {
 		return std::make_pair(lower_bound<key_t, comp>(key), upper_bound<key_t, comp>(key));
 	}
 
 	template<typename key_t, typename comp = key_compare,
 		     typename = typename comp::is_transparent,
-		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
+		     std::enable_if_t<std::conjunction_v<std::is_default_constructible<comp>,
+		                                         std::negation<std::is_convertible<key_t, key_type>>>,
+		     bool> = true>
 	std::pair<const_iterator, const_iterator> equal_range(const key_t& key) const {
 		return std::make_pair(lower_bound<key_t, comp>(key), upper_bound<key_t, comp>(key));
 	}
@@ -450,7 +463,9 @@ public:
 
 	template<typename key_t, typename comp = key_compare,
 		     typename = typename comp::is_transparent,
-		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
+		     std::enable_if_t<std::conjunction_v<std::is_default_constructible<comp>,
+		                                         std::negation<std::is_convertible<key_t, key_type>>>,
+		     bool> = true>
 	iterator lower_bound(const key_t& key) {
 		iterator it = begin();
 		comp instance{};
@@ -461,7 +476,9 @@ public:
 
 	template<typename key_t, typename comp = key_compare,
 		     typename = typename comp::is_transparent,
-		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
+		     std::enable_if_t<std::conjunction_v<std::is_default_constructible<comp>,
+		                                         std::negation<std::is_convertible<key_t, key_type>>>,
+		     bool> = true>
 	const_iterator lower_bound(const key_t& key) const {
 		const_iterator it = begin();
 		comp instance{};
@@ -490,7 +507,9 @@ public:
 
 	template<typename key_t, typename comp = key_compare,
 		     typename = typename comp::is_transparent,
-	         std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
+		     std::enable_if_t<std::conjunction_v<std::is_default_constructible<comp>,
+		                                         std::negation<std::is_convertible<key_t, key_type>>>,
+		     bool> = true>
 	iterator upper_bound(const key_t& key) {
 		iterator it = begin();
 		comp instance{};
@@ -501,7 +520,9 @@ public:
 
 	template<typename key_t, typename comp = key_compare,
 		     typename = typename comp::is_transparent,
-		     std::enable_if_t<std::is_default_constructible_v<comp>, bool> = true>
+		     std::enable_if_t<std::conjunction_v<std::is_default_constructible<comp>,
+		                                         std::negation<std::is_convertible<key_t, key_type>>>,
+		     bool> = true>
 	const_iterator upper_bound(const key_t& key) const {
 		const_iterator it = begin();
 		comp instance{};

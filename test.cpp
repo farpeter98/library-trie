@@ -325,7 +325,7 @@ void TestLookup() {
     const allow_transparent ctrie = trans;
 
     // note that without using std::string explicitly, this binds to transparent lookup when it's enabled
-    allow_transparent::const_iterator cresult = ctrie.find(std::string("nope"));
+    allow_transparent::const_iterator cresult = ctrie.find("nope");
     assert(cresult == ctrie.end());
     // transparent lookup based on string.length will find the first key with matching length
     // called on both const and regular trie for different template instantiation
@@ -339,16 +339,16 @@ void TestLookup() {
     assert(def.lower_bound("bcd")->first == "bcd");
     assert(def.lower_bound("x") == def.end());
     assert(trans.lower_bound(1)->first == "abc");
-    assert(ctrie.lower_bound(std::string("bcd"))->first == "bcd");
-    assert(ctrie.lower_bound(std::string("x")) == ctrie.end());
+    assert(ctrie.lower_bound("bcd")->first == "bcd");
+    assert(ctrie.lower_bound("x") == ctrie.end());
     assert(ctrie.lower_bound(1)->first == "abc");
 
     // similar to lower_bound, but returns the first greater key instead of not less
     assert(def.upper_bound("bcd")->first == "bcde");
     assert(def.upper_bound("x") == def.end());
     assert(trans.upper_bound(1)->first == "abc");
-    assert(ctrie.upper_bound(std::string("bcd"))->first == "bcde");
-    assert(ctrie.upper_bound(std::string("x")) == ctrie.end());
+    assert(ctrie.upper_bound("bcd")->first == "bcde");
+    assert(ctrie.upper_bound("x") == ctrie.end());
     assert(ctrie.upper_bound(1)->first == "abc");
 
     std::pair<allow_transparent::iterator, allow_transparent::iterator> resultPair = def.equal_range("bcd");
@@ -360,10 +360,10 @@ void TestLookup() {
     resultPair = trans.equal_range(3);
     assert(resultPair.first->first == "abc" && resultPair.second->first == "abcd");
 
-    std::pair<allow_transparent::const_iterator, allow_transparent::const_iterator> cresultPair = ctrie.equal_range(std::string("bcd"));
+    std::pair<allow_transparent::const_iterator, allow_transparent::const_iterator> cresultPair = ctrie.equal_range("bcd");
     assert(cresultPair.first->first == "bcd" && cresultPair.second->first == "bcde");
 
-    cresultPair = ctrie.equal_range(std::string("x"));
+    cresultPair = ctrie.equal_range("x");
     assert(cresultPair.first == ctrie.end() && cresultPair.second == ctrie.end());
 
     cresultPair = ctrie.equal_range(3);
