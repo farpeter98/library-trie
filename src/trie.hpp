@@ -16,16 +16,6 @@
 
 namespace ltr {
 
-template<typename, typename = void>
-struct is_transparent {
-	static constexpr bool value = false;
-};
-
-template<typename T>
-struct is_transparent<T, std::void_t<decltype(sizeof(T::is_transparent))>> {
-	static constexpr bool value = true;
-};
-
 template<typename K,
 		 typename V,
 		 typename Concat_expr_t,
