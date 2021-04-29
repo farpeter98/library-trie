@@ -332,23 +332,23 @@ x
   // a non-reference mapped type optional these changes would not get synced back,
   // thus I chose to stick with the std::map-like behaviour.
   // ------------------------- NOTE END --------------------------
-  auto MaybeElement = GTI["gsd"];
-  //static_assert(std::is_same_v<decltype(MaybeElement), optional<int>>);
+  auto& MaybeElement = GTI["gsd"];
+  static_assert(std::is_same_v<decltype(MaybeElement), optional<int>&>);
 
   // And because we return optional, operator[] is viable on const instances!
-  //const auto MaybeElementOnConst = cGTI["abel"];
-  //static_assert(std::is_same_v<decltype(MaybeElementOnConst),
-  //                             const optional<int>>);
+  const auto& MaybeElementOnConst = cGTI["abel"];
+  static_assert(std::is_same_v<decltype(MaybeElementOnConst),
+                               const optional<int>&>);
 
-  //assert(MaybeElement.has_value() && MaybeElement.value() == 42);
-  //assert(!MaybeElementOnConst.has_value() &&
-  //       MaybeElementOnConst.value_or(-1) == -1);
-  /*try {
+  assert(MaybeElement.has_value() && MaybeElement.value() == 42);
+  assert(!MaybeElementOnConst.has_value() &&
+         MaybeElementOnConst.value_or(-1) == -1);
+  auto val = *(GTI.begin());
+  try {
     GTI.emplace("This Element Does Not Exist", MaybeElementOnConst.value());
     assert(false && "Should have been unreachable.");
   } catch (std::bad_optional_access) {
-  }*/
-
+  }
   assert(cGTI.count("This Element Does Not Exist") == 0);
 
   // The elements should be iterated in the natural order of the keys, in this
@@ -399,7 +399,6 @@ x
   Result.pop_back();
   Expected = "(int1->1234)"; // Changing Copy doesn't change original obj.
   assert(Result == Expected);
-
 
   return 1;
 }

@@ -10,6 +10,7 @@
 #include <initializer_list>
 #include <stdexcept>
 #include <algorithm>
+#include <optional>
 
 #include "node.hpp"
 #include "iterators.hpp"
@@ -28,23 +29,25 @@ public:
 
 	// ---------------- member types ---------------
 
-	using key_type               = Seq<K, Traits<K>, Alloc<K>>;
-	using mapped_type            = V;
-	using value_type             = std::pair<const key_type, V>;
-	using key_concat             = Concat_expr_t;
-	using size_type              = std::size_t;
-	using difference_type        = std::ptrdiff_t;
-	using key_compare            = Comp<K>;
-	using allocator_type         = Alloc<value_type>;
-	using reference              = value_type&;
-	using const_reference        = const value_type&;
-	using pointer                = typename std::allocator_traits<allocator_type>::pointer;
-	using const__pointer         = typename std::allocator_traits<allocator_type>::const_pointer;
-	using node_type              = _Node<K, value_type, Alloc>;
-	using iterator               = _Iterator_base<node_type, false, false>;
-	using const_iterator         = _Iterator_base<node_type, true, false>;
-	using reverse_iterator       = _Iterator_base<node_type, false, true>;
-	using const_reverse_iterator = _Iterator_base<node_type, true, true>;
+	using key_type                = Seq<K, Traits<K>, Alloc<K>>;
+	using mapped_type             = V;
+	using value_type              = std::pair<const key_type, V>;
+	using key_concat              = Concat_expr_t;
+	using size_type               = std::size_t;
+	using difference_type         = std::ptrdiff_t;
+	using key_compare             = Comp<K>;
+	using allocator_type          = Alloc<value_type>;
+	using reference               = value_type&;
+	using const_reference         = const value_type&;
+	using pointer                 = typename std::allocator_traits<allocator_type>::pointer;
+	using const__pointer          = typename std::allocator_traits<allocator_type>::const_pointer;
+	using node_type               = _Node<K, mapped_type, Alloc>;
+	using iterator                = _Iterator_base<node_type, key_concat, key_type, mapped_type, false, false>;
+	using const_iterator          = _Iterator_base<node_type, key_concat, key_type, mapped_type, true, false>;
+	using reverse_iterator        = _Iterator_base<node_type, key_concat, key_type, mapped_type, false, true>;
+	using const_reverse_iterator  = _Iterator_base<node_type, key_concat, key_type, mapped_type, true, true>;
+	//using it_reference_type       = typename iterator::reference_type;
+	//using const_it_reference_type = typename const_iterator::reference_type;
 
 	// ----------- ctors and assignment ------------
 
@@ -104,33 +107,29 @@ public:
 	// -------------- element access ---------------
 
 	mapped_type& at(const key_type& key) {
-		const std::pair<node_type*, bool>& result = std::move(try_find(key));
+		const std::pair<node_type*, bool>& result = try_find(key);
 		if (!result.second)
 			throw std::out_of_range("invalid trie key");
 
-		return result.first->value->second;
+		return *(result.first->value);
 	}
 
 	const mapped_type& at(const key_type& key) const {
-		const std::pair<node_type*, bool>& result = std::move(try_find(key));
+		const std::pair<node_type*, bool>& result = try_find(key);
 		if (!result.second)
 			throw std::out_of_range("invalid trie key");
 
-		return result.first->value->second;
+		return *(result.first->value);
 	}
 
-	mapped_type& operator[](const key_type& key) {
-		node_type* target = try_insert(key);
-		if (!(target->value.has_value()))
-			target->value.emplace(std::piecewise_construct, std::forward_as_tuple(key), std::tuple<>());
-		return target->value->second;
+	std::optional<mapped_type>& operator[](const key_type& key) {
+		const std::pair<node_type*, bool>& result = try_find(key);
+		return result.first->value;
 	}
 
-	mapped_type& operator[](key_type&& key) {
-		node_type* target = try_insert(key);
-		if (!(target->value.has_value()))
-			target->value.emplace(std::piecewise_construct, std::forward_as_tuple(std::move(key)), std::tuple<>());
-		return target->value->second;
+	const std::optional<mapped_type>& operator[](const key_type& key) const {
+		const std::pair<node_type*, bool>& result = try_find(key);
+		return result.first->value;
 	}
 
 	// ----------------- iterators -----------------
@@ -219,7 +218,7 @@ public:
 		node_type* target = try_insert(value.first);
 		bool has_value = target->value.has_value();
 		if (!has_value)
-			target->value.emplace(value);
+			target->value.emplace(value.second);
 		return std::make_pair(std::move(iterator(target)), !has_value);
 	}
 
@@ -233,7 +232,7 @@ public:
 		node_type* target = try_insert(value.first);
 		bool has_value = target->value.has_value();
 		if (!has_value)
-			target->value.emplace(std::move(value));
+			target->value.emplace(std::move(value.second));
 		return std::make_pair(std::move(iterator(target)), !has_value);
 	}
 
@@ -255,16 +254,7 @@ public:
 	std::pair<iterator, bool> insert_or_assign(const key_type& key, M&& obj) {
 		node_type* target = try_insert(key);
 		bool has_value = target->value.has_value();
-		target->value.emplace(value_type(key, std::forward<M>(obj)));
-		return std::make_pair(std::move(iterator(target)), !has_value);
-	}
-
-	template<typename M,
-	         std::enable_if_t<std::is_assignable<mapped_type&, M&&>::value, bool> = true>
-	std::pair<iterator, bool> insert_or_assign(key_type&& key, M&& obj) {
-		node_type* target = try_insert(key);
-		bool has_value = target->value.has_value();
-		target->value.emplace(value_type(std::move(key), std::forward<M>(obj)));
+		target->value.emplace(std::forward<M>(obj));
 		return std::make_pair(std::move(iterator(target)), !has_value);
 	}
 
@@ -274,7 +264,7 @@ public:
 		node_type* target = try_insert(value.first);
 		bool has_value = target->value.has_value();
 		if (!has_value)
-			target->value.emplace(std::move(value));
+			target->value.emplace(std::move(value.second));
 		return std::make_pair(std::move(iterator(target)), !has_value);
 	}
 
@@ -283,19 +273,7 @@ public:
 		node_type* target = try_insert(key);
 		bool has_value = target->value.has_value();
 		if (!has_value) {
-			value_type value(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple(std::forward<Args>(args)...));
-			target->value.emplace(std::move(value));
-		}
-		return std::make_pair(std::move(iterator(target)), !has_value);
-	}
-
-	template<typename... Args>
-	std::pair<iterator, bool> try_emplace(key_type&& key, Args&&... args) {
-		node_type* target = try_insert(key);
-		bool has_value = target->value.has_value();
-		if (!has_value) {
-			value_type value(std::piecewise_construct, std::forward_as_tuple(std::move(key)), std::forward_as_tuple(std::forward<Args>(args)...));
-			target->value.emplace(std::move(value));
+			target->value.emplace(std::forward<Args>(args)...);
 		}
 		return std::make_pair(std::move(iterator(target)), !has_value);
 	}

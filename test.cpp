@@ -77,7 +77,7 @@ void TestAssign() {
     assert(other.size() == 2);
 }
 
-void TestAcces() {
+void TestAccess() {
     default_trie trie{{{"key1",      31},
                        {"something", 5112},
                        {"fajsjk",    51},
@@ -90,10 +90,19 @@ void TestAcces() {
         assert(false);
     }catch(std::out_of_range ex){}
 
-    trie["fajsjk"] = 75;
-    assert(trie["fajsjk"] == 75);
-    trie["newkey"];
-    assert(trie.size() == 5 && trie.at("newkey") == int());
+    *(trie["fajsjk"]) = 75;
+    assert(trie["fajsjk"].value() == 75);
+    // operator[] doesn't create new node in this version
+    //trie["newkey"];
+    //assert(trie.size() == 5 && trie.at("newkey") == int());
+
+    const default_trie ctrie = trie;
+    const int& val = ctrie.at("something");
+    assert(val == 46);
+    const std::optional<int>& val1 = ctrie["something"];
+    assert(val1.has_value());
+    const std::optional<int>& val2 = ctrie["nosuchkey"];
+    assert(!val2.has_value());
 }
 
 void TestIterator() {
@@ -138,11 +147,11 @@ void TestCapacity() {
     assert(!empty.empty());
     assert(trie.size() == 4);
     trie["new"];
-    assert(trie.size() == 5);
+    assert(trie.size() == 4);
     trie["fajsjk"];
-    assert(trie.size() == 5);
+    assert(trie.size() == 4);
     trie["faj"];
-    assert(trie.size() == 6);
+    assert(trie.size() == 4);
 }
 
 void TestClear() {
@@ -320,8 +329,9 @@ void TestLookup() {
 
     allow_transparent::iterator result = def.find("bcd");
     assert(result != def.end() && result->second == 72);
-    result->second = 58;
-    assert(def.find("bcd")->second == 58);
+    // not an output iterator in this version
+    //result->second = 58;
+    //assert(def.find("bcd")->second == 58);
     const allow_transparent ctrie = trans;
 
     // note that without using std::string explicitly, this binds to transparent lookup when it's enabled
@@ -401,6 +411,7 @@ void TestNonmembers() {
 int main() {
     TestCtors();
     TestAssign();
+    TestAccess();
     TestIterator();
     TestCapacity();
     TestClear();

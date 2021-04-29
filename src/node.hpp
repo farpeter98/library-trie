@@ -17,13 +17,13 @@ struct _Node {
 	using allocator_type   = Alloc<_Node>;
 	using allocator_traits = std::allocator_traits<allocator_type>;
 	using key_type         = K;
-	using value_type       = V;
+	using mapped_type      = V;
 
 	static allocator_type node_allocator;
 
 	_Node* parent, * child, * prev, * next;
 	K key;
-	std::optional<value_type> value;
+	std::optional<mapped_type> value;
 
 	constexpr _Node() noexcept(noexcept(K())) : parent(nullptr), prev(nullptr), next(nullptr), child(nullptr), key() {}
 	constexpr _Node(_Node&& other) = delete;
@@ -49,10 +49,10 @@ struct _Node {
 	constexpr _Node(const K& key) : key(key), value(), parent(nullptr),
 		                            prev(nullptr), next(nullptr), child(nullptr) {}
 
-	constexpr _Node(const K& key, const value_type& value) : key(key), value(std::in_place, value), parent(nullptr),
+	constexpr _Node(const K& key, const mapped_type& value) : key(key), value(std::in_place, value), parent(nullptr),
 										                     prev(nullptr), next(nullptr), child(nullptr) {}
 
-	constexpr _Node(K&& key, value_type&& value): key(std::exchange(key, 0)), value(std::in_place, std::move(value)), parent(nullptr),
+	constexpr _Node(K&& key, mapped_type&& value): key(std::exchange(key, 0)), value(std::in_place, std::move(value)), parent(nullptr),
 										          prev(nullptr), next(nullptr), child(nullptr) {}
 
 	// recursively destroy this node and its subtree

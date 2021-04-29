@@ -6,43 +6,54 @@
 #include <utility>
 #include <iterator>
 #include <memory>
+#include <stack>
+#include <type_traits>
 
 #include "node.hpp"
 
 namespace ltr {
 
-template<typename N, bool const_v>
+template<typename K, typename M, bool const_v>
 struct consted_type;
 
 template<typename N, bool reverse_v>
 struct reversed_type;
 
 // Bidirectional iterator class
+// Not an outputiterator in this version
 template<typename N,	// associated node type
-		 bool is_const,
+         typename Conc,
+         typename K,
+         typename V,
+         bool is_const,
          bool is_reverse>
 class _Iterator_base {
 private:
-	using node_type  = N;
+	using node_type   = N;
+	using key_concat  = Conc;
+	using key_type    = K;
+	using mapped_type = V;
 	using mover_type = reversed_type<node_type, is_reverse>;
 public:
+	// no reference_type, so no iterator_tag either
 	using difference_type   = std::ptrdiff_t;
-	using value_type        = typename consted_type<N, is_const>::val;
-	using pointer           = typename consted_type<N, is_const>::ptr;
-	using reference         = typename consted_type<N, is_const>::ref;
-	using iterator_category = std::bidirectional_iterator_tag;
+	using value_type        = typename consted_type<key_type, mapped_type, is_const>::val;
+	using pointer           = typename consted_type<key_type, mapped_type, is_const>::ptr;
 
 	constexpr _Iterator_base() noexcept : node(nullptr) {}
 	constexpr _Iterator_base(const _Iterator_base& other) noexcept = default;
 	constexpr _Iterator_base(node_type* node) noexcept : node(node) {}
 	constexpr _Iterator_base& operator=(const _Iterator_base& other) noexcept = default;
 
-	reference operator*() {
-		return *(node->value);
+	// this returns a copy, not a reference
+	value_type operator*() {
+		const key_type& key = get_key(node);
+		value_type val = std::make_pair(std::move(key), std::move(node->value.value()));
+		return val;
 	}
 
 	pointer operator->() {
-		return node->value.operator->();
+		return std::make_unique<value_type>(get_key(node), std::move(node->value.value()));
 	}
 
 	friend bool operator==(const _Iterator_base& lhs, const _Iterator_base& rhs) {
@@ -80,21 +91,36 @@ public:
 	}
 
 private:
+
+	static const key_type get_key(node_type* node) {
+		static key_concat instance{};
+		std::stack<node_type*> parents{};
+		key_type key{};
+		while (node->parent) {
+			parents.push(node);
+			node = node->parent;
+		}
+		while (!parents.empty()) {
+			node = parents.top();
+			key = instance(key, node->key);
+			parents.pop();
+		}
+		return key;
+	}
+
 	node_type* node;
 }; // class _Iterator_base
 
-template<typename N>
-struct consted_type<N, true> {
-	using val = const typename N::value_type;
-	using ptr = const val*;
-	using ref = const val&;
+template<typename K, typename M>
+struct consted_type<K, M, true> {
+	using val = const std::pair<const K, M>;
+	using ptr = std::unique_ptr<val>;
 };
 
-template<typename N>
-struct consted_type<N, false> {
-	using val = typename N::value_type;
-	using ptr = val*;
-	using ref = val&;
+template<typename K, typename M>
+struct consted_type<K, M, false> {
+	using val = std::pair<const K, M>;
+	using ptr = std::unique_ptr<val>;
 };
 
 template<typename N>
