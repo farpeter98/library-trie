@@ -46,8 +46,6 @@ public:
 	using const_iterator          = _Iterator_base<node_type, key_concat, key_type, mapped_type, true, false>;
 	using reverse_iterator        = _Iterator_base<node_type, key_concat, key_type, mapped_type, false, true>;
 	using const_reverse_iterator  = _Iterator_base<node_type, key_concat, key_type, mapped_type, true, true>;
-	//using it_reference_type       = typename iterator::reference_type;
-	//using const_it_reference_type = typename const_iterator::reference_type;
 
 	// ----------- ctors and assignment ------------
 
