@@ -77,7 +77,7 @@ void TestAssign() {
     assert(other.size() == 2);
 }
 
-void TestAcces() {
+void TestAccess() {
     default_trie trie{{{"key1",      31},
                        {"something", 5112},
                        {"fajsjk",    51},
@@ -401,6 +401,7 @@ void TestNonmembers() {
 int main() {
     TestCtors();
     TestAssign();
+    TestAccess();
     TestIterator();
     TestCapacity();
     TestClear();
