@@ -25,8 +25,8 @@ void TestCtors() {
                            {"fajsjk",    51},
                            {"hjazuwa",   72}}, concat };
     assert(initList.size() == 4);
-    assert(initList.at("key1") = 31);
-    assert(initList["hjazuwa"] = 72);
+    assert(initList.at("key1") == 31);
+    assert(initList["hjazuwa"] == 72);
     try {
         initList.at("nosuchkey");
         assert(false);

@@ -104,7 +104,7 @@ public:
 	// -------------- element access ---------------
 
 	mapped_type& at(const key_type& key) {
-		const std::pair<node_type*, bool>& result = std::move(try_find(key));
+		const std::pair<node_type*, bool>& result = try_find(key);
 		if (!result.second)
 			throw std::out_of_range("invalid trie key");
 
@@ -112,7 +112,7 @@ public:
 	}
 
 	const mapped_type& at(const key_type& key) const {
-		const std::pair<node_type*, bool>& result = std::move(try_find(key));
+		const std::pair<node_type*, bool>& result = try_find(key);
 		if (!result.second)
 			throw std::out_of_range("invalid trie key");
 
@@ -325,7 +325,7 @@ public:
 	}
 
 	size_type erase(const key_type& key) {
-		const std::pair<node_type*, bool>& result = std::move(try_find(key));
+		const std::pair<node_type*, bool>& result = try_find(key);
 		if (result.second && result.first->value.has_value()) {
 			if (result.first->child)
 				result.first->value.reset();
@@ -359,14 +359,14 @@ public:
 	}
 
 	iterator find(const key_type& key) {
-		const std::pair<node_type*, bool>& result = std::move(try_find(key));
+		const std::pair<node_type*, bool>& result = try_find(key);
 		if (result.second)
 			return iterator(result.first);
 		return end();
 	}
 
 	const_iterator find(const key_type& key) const {
-		const std::pair<node_type*, bool>& result = std::move(try_find(key));
+		const std::pair<node_type*, bool>& result = try_find(key);
 		if (result.second)
 			return const_iterator(result.first);
 		return cend();
@@ -378,7 +378,7 @@ public:
 		                                         std::negation<std::is_convertible<key_t, key_type>>>,
 		     bool> = true>
 	iterator find(const key_t& key) {
-		const std::pair<node_type*, bool>& result = std::move(try_find<key_t, comp>(key));
+		const std::pair<node_type*, bool>& result = try_find<key_t, comp>(key);
 		if (result.second)
 			return iterator(result.first);
 		return end();
@@ -390,7 +390,7 @@ public:
 		                                         std::negation<std::is_convertible<key_t, key_type>>>,
 		     bool> = true>
 	const_iterator find(const key_t& key) const {
-		const std::pair<node_type*, bool>& result = std::move(try_find<key_t, comp>(key));
+		const std::pair<node_type*, bool>& result = try_find<key_t, comp>(key);
 		if (result.second)
 			return const_iterator(result.first);
 		return cend();
