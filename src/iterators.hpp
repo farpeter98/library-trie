@@ -35,7 +35,8 @@ public:
 	using difference_type   = std::ptrdiff_t;
 	using value_type        = typename consted_type<key_type, mapped_type, is_const>::val;
 	using pointer           = typename consted_type<key_type, mapped_type, is_const>::ptr;
-	using iterator_tag = std::bidirectional_iterator_tag;
+	using reference         = value_type;
+	using iterator_category = std::bidirectional_iterator_tag;
 
 	constexpr _Iterator_base() noexcept : node(nullptr) {}
 	constexpr _Iterator_base(const _Iterator_base& other) noexcept = default;

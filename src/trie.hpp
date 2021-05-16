@@ -198,19 +198,8 @@ public:
 		return _root->child == nullptr;
 	}
 
-	// GCC is not willing to cooperate due to incomplete iterator member types
 	size_type size() const {
-#ifdef _MSC_VER
 		return std::distance(cbegin(), cend());
-#else
-		size_type size = 0;
-		const_iterator begin = cbegin();
-		while (begin != end()) {
-			++size;
-			++begin;
-		}
-		return size;
-#endif
 	}
 
 	// ----------------- modifiers -----------------
@@ -515,8 +504,7 @@ public:
 	}
 
 	// ----------------- nonmember -----------------
-	// GCC is not willing to cooperate due to incomplete iterator member types
-#ifdef _MSC_VER
+
 	friend bool operator==(const trie& lhs, const trie& rhs) {
 		return !(lhs < rhs) && !(rhs < lhs);
 	}
@@ -540,7 +528,7 @@ public:
 	friend bool operator>=(const trie& lhs, const trie& rhs) {
 		return !(lhs < rhs);
 	}
-#endif
+
 	friend constexpr void swap(trie& lhs, trie& rhs) noexcept {
 		lhs.swap(rhs);
 	}
