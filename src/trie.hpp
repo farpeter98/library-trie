@@ -198,8 +198,19 @@ public:
 		return _root->child == nullptr;
 	}
 
+	// GCC is not willing to cooperate due to incomplete iterator member types
 	size_type size() const {
-		return std::distance(begin(), end());
+#ifdef _MSC_VER
+		return std::distance(cbegin(), cend());
+#else
+		size_type size = 0;
+		const_iterator begin = cbegin();
+		while (begin != end()) {
+			++size;
+			++begin;
+		}
+		return size;
+#endif
 	}
 
 	// ----------------- modifiers -----------------
@@ -301,7 +312,7 @@ public:
 	}
 
 	size_type erase(const key_type& key) {
-		const std::pair<node_type*, bool>& result = std::move(try_find(key));
+		const std::pair<node_type*, bool>& result = try_find(key);
 		if (result.second && result.first->value.has_value()) {
 			if (result.first->child)
 				result.first->value.reset();
@@ -335,14 +346,14 @@ public:
 	}
 
 	iterator find(const key_type& key) {
-		const std::pair<node_type*, bool>& result = std::move(try_find(key));
+		const std::pair<node_type*, bool>& result = try_find(key);
 		if (result.second)
 			return iterator(result.first);
 		return end();
 	}
 
 	const_iterator find(const key_type& key) const {
-		const std::pair<node_type*, bool>& result = std::move(try_find(key));
+		const std::pair<node_type*, bool>& result = try_find(key);
 		if (result.second)
 			return const_iterator(result.first);
 		return cend();
@@ -354,7 +365,7 @@ public:
 		                                         std::negation<std::is_convertible<key_t, key_type>>>,
 		     bool> = true>
 	iterator find(const key_t& key) {
-		const std::pair<node_type*, bool>& result = std::move(try_find<key_t, comp>(key));
+		const std::pair<node_type*, bool>& result = try_find<key_t, comp>(key);
 		if (result.second)
 			return iterator(result.first);
 		return end();
@@ -366,7 +377,7 @@ public:
 		                                         std::negation<std::is_convertible<key_t, key_type>>>,
 		     bool> = true>
 	const_iterator find(const key_t& key) const {
-		const std::pair<node_type*, bool>& result = std::move(try_find<key_t, comp>(key));
+		const std::pair<node_type*, bool>& result = try_find<key_t, comp>(key);
 		if (result.second)
 			return const_iterator(result.first);
 		return cend();
@@ -504,7 +515,8 @@ public:
 	}
 
 	// ----------------- nonmember -----------------
-
+	// GCC is not willing to cooperate due to incomplete iterator member types
+#ifdef _MSC_VER
 	friend bool operator==(const trie& lhs, const trie& rhs) {
 		return !(lhs < rhs) && !(rhs < lhs);
 	}
@@ -528,7 +540,7 @@ public:
 	friend bool operator>=(const trie& lhs, const trie& rhs) {
 		return !(lhs < rhs);
 	}
-
+#endif
 	friend constexpr void swap(trie& lhs, trie& rhs) noexcept {
 		lhs.swap(rhs);
 	}
