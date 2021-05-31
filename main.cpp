@@ -332,6 +332,9 @@ x
   // undesired behaviour. Might have been worth to have custom
   // optional which asserts for such usage, or make operator[]
   // a completely const operation, but alas, none of those happened
+  // UPDATE: for non-existent keys operator[] returns a reference 
+  // of a dummy optional, making it safe - although pointless -
+  // to write.
   // ------------------------- NOTE END --------------------------
   auto& MaybeElement = GTI["gsd"];
 

@@ -121,13 +121,17 @@ public:
 	}
 
 	std::optional<mapped_type>& operator[](const key_type& key) {
+		// reset dummy to ensure returned optional is empty
+		_dummy.reset();
 		const std::pair<node_type*, bool>& result = try_find(key);
-		return result.first->value;
+		return result.second ? result.first->value : _dummy;
 	}
 
 	const std::optional<mapped_type>& operator[](const key_type& key) const {
+		// reset dummy to ensure returned optional is empty
+		_dummy.reset();
 		const std::pair<node_type*, bool>& result = try_find(key);
-		return result.first->value;
+		return result.second ? result.first->value : _dummy;
 	}
 
 	// ----------------- iterators -----------------
@@ -675,6 +679,9 @@ private:
 	key_concat _concat;
 	node_type* _root;
 	const key_compare _comp;
+	// dummy optional to return on calling operator[] on non-existent keys
+	// mutable to allow it to be reset even in const call
+	mutable std::optional<mapped_type> _dummy;
 
 }; // class trie
 
